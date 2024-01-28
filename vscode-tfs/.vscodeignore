@@ -1,0 +1,13 @@
+.eslintrc
+.gitignore
+.prettierrc
+.vscode-test/**
+.vscode/**
+*.log
+*.spec.*
+out/**/*.map
+fixtures/**
+res/icon.xcf
+src/**
+tsconfig.json
+typings/**

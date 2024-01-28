@@ -1,0 +1,202 @@
+{
+    "name": "svetlyo-tfs",
+    "version": "1.0.0-svetntfs01",
+    "description": "TFS Visual Studio Code integration.",
+    "license": "SEE LICENSE IN LICENSE",
+    "main": "./out/extension",
+    "scripts": {
+        "vscode:prepublish": "yarn run compile",
+        "precompile": "yarn run rimraf out",
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./",
+        "pretest": "yarn run compile && yarn run lint",
+        "test": "mocha -r ts-node/register \"src/**/*.spec.ts\"",
+        "lint": "eslint src --ext ts",
+        "fix": "prettier --write \"src/**/*.ts\""
+    },
+    "devDependencies": {
+        "@types/mocha": "^7.0.2",
+        "@types/node": "^13.11.0",
+        "@types/vscode": "^1.45.1",
+        "@typescript-eslint/eslint-plugin": "^3.1.0",
+        "@typescript-eslint/parser": "^3.1.0",
+        "eslint": "7.2.0",
+        "eslint-config-prettier": "^6.11.0",
+        "eslint-plugin-mocha": "7.0.1",
+        "eslint-plugin-prettier": "^3.1.3",
+        "mocha": "^7.2.0",
+        "prettier": "^2.0.5",
+        "rimraf": "^3.0.2",
+        "ts-node": "^8.10.2",
+        "typescript": "^3.9.5"
+    },
+    "engines": {
+        "vscode": "^1.45.1"
+    },
+    "activationEvents": [
+        "onCommand:vscode-tfs.get",
+        "onCommand:vscode-tfs.checkout",
+        "onCommand:vscode-tfs.checkin",
+        "onCommand:vscode-tfs.add",
+        "onCommand:vscode-tfs.delete",
+        "onCommand:vscode-tfs.undo",
+        "onCommand:vscode-tfs.openInBrowser",
+        "onCommand:vscode-tfs.list",
+        "onView:pendingChanges"
+    ],
+    "contributes": {
+        "viewsContainers": {
+            "activitybar": [
+                {
+                    "id": "pending-changes",
+                    "title": "Pending Changes",
+                    "icon": "res/icon.png"
+                }
+            ]
+        },
+        "views": {
+            "pending-changes": [
+                {
+                "id": "pendingChanges",
+                "name": "Pending Changes",
+                "icon": "res/icon.png",
+                "contextualTitle": "Pending Changes"
+                }
+            ]
+          
+        },
+        "commands": [
+            {
+                "command": "pendingChanges.refreshEntry",
+                "title": "Refresh",
+                "icon": {
+                    "light": "res/icon.png",
+                    "dark": "res/icon.png"
+            }
+            },
+            {
+                "command": "vscode-tfs.get",
+                "title": "Get",
+                "detail": "Get the latest version of files.",
+                "category": "TFS"
+            },
+            {
+                "command": "vscode-tfs.checkout",
+                "title": "Check Out for Edit",
+                "detail": "Checks out a file and changes its pending change status to Edit.",
+                "category": "TFS"
+            },
+            {
+                "command": "vscode-tfs.checkin",
+                "detail": "Checks in pending changes to TFS.",
+                "title": "Check In",
+                "category": "TFS"
+            },
+            {
+                "command": "vscode-tfs.add",
+                "title": "Add",
+                "detail": "Adds files and folders to version control.",
+                "category": "TFS"
+            },
+            {
+                "command": "vscode-tfs.delete",
+                "title": "Delete",
+                "detail": "Removes files and folders from the TFS and deletes them from the disk.",
+                "category": "TFS"
+            },
+            {
+                "command": "vscode-tfs.undo",
+                "title": "Undo Pending Changes",
+                "detail": "Discards one or more pending changes to files or folders.",
+                "category": "TFS"
+            },
+            {
+                "command": "vscode-tfs.openInBrowser",
+                "title": "Open in Browser",
+                "detail": "Opens files and folders in browser.",
+                "category": "TFS"
+            },
+            {
+                "command": "vscode-tfs.list",
+                "title": "Team Foundation Server...",
+                "category": "TFS"
+            }
+        ],
+        "menus": {
+            "view/title": [
+                {
+                    "command": "pendingChanges.refreshEntry",
+                    "when": "view == pendingChanges",
+                    "group": "navigation"
+                }
+            ],
+            "commandPalette": [
+                {
+                    "command": "vscode-tfs.list",
+                    "when": "false"
+                }
+            ],
+            "explorer/context": [
+                {
+                    "command": "vscode-tfs.list"
+                }
+            ],
+            "editor/title/context": [
+                {
+                    "command": "vscode-tfs.list"
+                }
+            ]
+        },
+        "configuration": {
+            "type": "object",
+            "title": "TFS configuration",
+            "properties": {
+                "tfs.location": {
+                    "type": "string",
+                    "description": "Path to the TFS command line client (tf.exe)."
+                },
+                "tfs.promptToCheckOut": {
+                    "type": "boolean",
+                    "description": "True -> Checkout prompt in Team Foundation Server \n False -> Automatically check out files."
+                }
+            }
+        },
+        "keybindings": [
+            {
+                "command": "vscode-tfs.list",
+                "key": "Alt+T"
+            }
+        ]
+    },
+    "homepage": "https://github.com/nsvetoslav",
+    "author": {
+        "name": "Svetoslav Nikolov",
+        "email": "svetn001@gmail.com",
+        "url": "https://github.com/nsvetoslav"
+    },
+    "publisher": "Svetoslav Nikolov",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/nsvetoslav/vscode-tfs.git"
+    },
+    "bugs": {
+        "url": "https://github.com/nsvetoslav/vscode-tfs/issues"
+    },
+    "readmeFilename": "README.md",
+    "displayName": "TFS",
+    "icon": "res/icon.png",
+    "galleryBanner": {
+        "color": "#912a2a",
+        "theme": "dark"
+    },
+    "categories": [
+        "Other"
+    ],
+    "keywords": [
+        "tfs",
+        "team",
+        "foundation",
+        "server",
+        "microsoft"
+    ]
+}

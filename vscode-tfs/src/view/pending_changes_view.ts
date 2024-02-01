@@ -4,7 +4,12 @@ import * as path from 'path';
 
 export class PendingChangesProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
   constructor(private workspaceRoot: string) {}
+  private _onDidChangeTreeData: vscode.EventEmitter<vscode.TreeItem | undefined | null | void> = new vscode.EventEmitter<vscode.TreeItem | undefined | null | void>();
+  readonly onDidChangeTreeData: vscode.Event<vscode.TreeItem | undefined | null | void> = this._onDidChangeTreeData.event;
 
+  refresh(): void {
+    this._onDidChangeTreeData.fire();
+  }
   private getFolderNodes(): Thenable<FolderNode[]> {
     return new Promise((resolve, reject) => {
       if (!this.workspaceRoot) {

@@ -1,0 +1,29 @@
+/* styles.css */
+
+.container {
+    margin: 20px;
+  }
+  
+  .element {
+    display: flex;
+    align-items: center;
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin-bottom: 10px;
+  }
+  
+  img {
+    max-width: 100px; /* Adjust the size of the image as needed */
+    margin-right: 10px;
+  }
+  
+  .text {
+    flex-grow: 1;
+  }
+  
+  .letter {
+    font-size: 24px;
+    font-weight: bold;
+    margin-left: 10px;
+  }
+  

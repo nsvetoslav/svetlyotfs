@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import path from 'path';
 import * as vscode from 'vscode';
+import { view } from '../commands/view';
 
 function generateGuid(): string {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
@@ -10,8 +11,7 @@ function generateGuid(): string {
     });
 }
 
-export async function compare_files(originalContent: string, 
-    modifiedFileFullPath: string,
+export async function compare_files(filePath: string,
     contextGlobalStoragePath: string){
     try {
         // Ensure the globalStoragePath directory exists
@@ -28,18 +28,14 @@ export async function compare_files(originalContent: string,
         const tempDir = globalStoragePath;
       
         // Create unique filenames for temporary files
-        const originalFilename = `${path.basename(modifiedFileFullPath)}_${generateGuid()}.txt`;
-        const originalPath = path.join(tempDir, originalFilename);
+        // _${generateGuid()}.txt
+        const originalFilename = `${path.basename(filePath)}`;
+        const originalPath = path.join("D:\\", originalFilename);
+        
+        let task = await view(filePath, originalPath);
       
-        // Create temporary files with the content
-        fs.writeFileSync(originalPath, originalContent);
-      
-        // Open the documents
-        const originalUri = vscode.Uri.file(originalPath);
-        const modifiedUri = vscode.Uri.file(modifiedFileFullPath);
-      
-        let originalDocument = await vscode.workspace.openTextDocument(originalUri);
-        const modifiedDocument = await vscode.workspace.openTextDocument(modifiedUri);
+        const originalDocument = await vscode.workspace.openTextDocument(originalPath);
+        const modifiedDocument = await vscode.workspace.openTextDocument(filePath);
       
         // Show the documents side by side
         const diffCommand = vscode.commands.executeCommand("vscode.diff", originalDocument.uri, modifiedDocument.uri);

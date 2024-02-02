@@ -67,10 +67,25 @@
         },
         "commands": [
             {
+                "command": "pendingChanges.openFile",
+                "title": "Open file",
+                "enablement": "true"
+            },
+            {
                 "command": "pendingChanges.refreshEntry",
                 "title": "Modified",
                 "enablement": "true"
             },
+            {
+                "command": "pendingChanges.compareFiles",
+                "title": "Compare with latest",
+                "enablement": "true"
+            },
+            {
+                "command": "pendingChanges.undo",
+                "title": "Undo changes",
+                "enablement": "true"
+            },                    
             {
                 "command": "vscode-tfs.get",
                 "title": "Get",
@@ -130,6 +145,18 @@
                     "command": "pendingChanges.refreshEntry",
                     "when": "view == pendingChanges",
                     "group": "inline",
+                    "visible": true
+                },
+                {
+                    "command": "pendingChanges.compareFiles",
+                    "when": "view == pendingChanges",
+                    "group": "navigation",
+                    "visible": true
+                },
+                {
+                    "command": "pendingChanges.undo",
+                    "when": "view == pendingChanges",
+                    "group": "navigation",
                     "visible": true
                 }
             ],

@@ -14,3 +14,8 @@ export async function list(uri: vscode.Uri): Promise<void> {
     return vscode.commands.executeCommand(selectedItem.command, uri)
   }
 }
+
+export async function checkoutOnSave(uri: vscode.Uri): Promise<void> {
+  console.log(uri.fsPath);
+  await vscode.workspace.saveAll();
+}

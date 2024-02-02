@@ -18,6 +18,7 @@
         "@types/mocha": "^7.0.2",
         "@types/node": "^13.11.0",
         "@types/vscode": "^1.45.1",
+        "@types/xml2js": "^0.4.14",
         "@typescript-eslint/eslint-plugin": "^3.1.0",
         "@typescript-eslint/parser": "^3.1.0",
         "eslint": "7.2.0",
@@ -50,29 +51,25 @@
                 {
                     "id": "pending-changes",
                     "title": "Pending Changes",
-                    "icon": "res/icon.png"
+                    "icon": "res/4905011.webp"
                 }
             ]
         },
         "views": {
             "pending-changes": [
                 {
-                "id": "pendingChanges",
-                "name": "Pending Changes",
-                "icon": "res/icon.png",
-                "contextualTitle": "Pending Changes"
+                    "id": "pendingChanges",
+                    "name": "Pending Changes",
+                    "icon": "res/icon.png",
+                    "contextualTitle": "Pending Changes"
                 }
             ]
-          
         },
         "commands": [
             {
                 "command": "pendingChanges.refreshEntry",
-                "title": "Refresh",
-                "icon": {
-                    "light": "res/icon.png",
-                    "dark": "res/icon.png"
-            }
+                "title": "Modified",
+                "enablement": "true"
             },
             {
                 "command": "vscode-tfs.get",
@@ -120,14 +117,20 @@
                 "command": "vscode-tfs.list",
                 "title": "Team Foundation Server...",
                 "category": "TFS"
+            },
+            {
+                "command": "vscode-tfs.checkoutOnSave",
+                "title": "Checkout on save...",
+                "category": "TFS"
             }
         ],
         "menus": {
-            "view/title": [
+            "view/item/context": [
                 {
                     "command": "pendingChanges.refreshEntry",
                     "when": "view == pendingChanges",
-                    "group": "navigation"
+                    "group": "inline",
+                    "visible": true
                 }
             ],
             "commandPalette": [
@@ -165,6 +168,10 @@
             {
                 "command": "vscode-tfs.list",
                 "key": "Alt+T"
+            },
+            {
+                "command": "vscode-tfs.checkoutOnSave",
+                "key": "Ctrl+S"
             }
         ]
     },
@@ -198,5 +205,8 @@
         "foundation",
         "server",
         "microsoft"
-    ]
+    ],
+    "dependencies": {
+        "xml2js": "^0.6.2"
+    }
 }

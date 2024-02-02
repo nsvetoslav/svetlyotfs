@@ -1,5 +1,6 @@
 import * as vscode from "vscode"
 import { tf } from "../tfs/tfExe"
+import { pendingChangesProvider } from "../view/var"
 
 export async function checkout(uri: vscode.Uri): Promise<void> {
   const task = tf(["checkout", uri.fsPath, "/recursive"])
@@ -7,4 +8,6 @@ export async function checkout(uri: vscode.Uri): Promise<void> {
   vscode.window.setStatusBarMessage("TFS: Checking...", task)
   await task
   await vscode.window.showInformationMessage(`TFS: ${uri.fsPath} successfully checked out for editing.`)
+
+  pendingChangesProvider.refresh();
 }

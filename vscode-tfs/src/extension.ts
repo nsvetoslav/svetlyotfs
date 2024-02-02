@@ -9,6 +9,7 @@ import { openInBrowser } from "./commands/openInBrowser"
 import { undo } from "./commands/undo"
 import { handle } from "./executor"
 import { PendingChangesProvider } from "./views/pending_changes_view"
+import { pendingChangesProvider } from "./view/var"
 import { tf } from "./tfs/tfExe"
 import { dirStatus } from "./commands/dirStatus"
 
@@ -30,16 +31,6 @@ export function activate(context: vscode.ExtensionContext): void {
   for (const desc of commands) {
     context.subscriptions.push(vscode.commands.registerCommand(desc.command, desc.handler))
   }
- 
-  } catch (error) {
-  console.log(error);    
-  }
-  const saveDisposable = vscode.workspace.onWillSaveTextDocument(event => {
-    handleOnWillSave(event);
-  });
-
-  // Make sure to dispose of the event listener when the extension is deactivated
-  context.subscriptions.push(saveDisposable);
 
   const rootPath =
     vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0

@@ -1,8 +1,7 @@
 import * as vscode from "vscode"
 import { tf } from "../tfs/tfExe"
-import { pendingChangesProvider } from "../view/var"
+import { pendingChangesProvider } from "../globals";
 
-export async function add(uri: vscode.Uri): Promise<void> {
-  console.log(uri);
+export async function add(): Promise<void> {
   pendingChangesProvider.refresh();
 }

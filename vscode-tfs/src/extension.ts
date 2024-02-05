@@ -9,8 +9,8 @@ import { openInBrowser } from "./commands/openInBrowser"
 import { undo } from "./commands/undo"
 import { handle } from "./executor"
 import { tf } from "./tfs/tfExe"
-import { pendingChangesProvider } from "./view/var"
 import { compare_files } from "./files/compare"
+import { pendingChangesProvider } from "./globals"
 
 export const commands = [
   { command: "vscode-tfs.get", handler: handle(get) },

@@ -1,6 +1,6 @@
 import * as vscode from "vscode"
 import { tf } from "../tfs/tfExe"
-import { pendingChangesProvider } from "../view/var"
+import { pendingChangesProvider } from "../globals"
 
 export async function checkin(uri: vscode.Uri): Promise<void> {
   const task = tf(["checkin", uri.fsPath, "/recursive"])

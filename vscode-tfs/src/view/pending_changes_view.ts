@@ -1,11 +1,12 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
-import { PendingChange, dirStatus, getRootDirectory } from '../commands/dirStatus';
+import { dirStatus, getRootDirectory } from '../commands/dirStatus';
+import { PendingChange } from '../types/pendingChange';
 
 let root = getRootDirectory();
 
 export class PendingChangesProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
-  constructor(private workspaceRoot: string) {}
+  constructor() {}
   private _onDidChangeTreeData: vscode.EventEmitter<vscode.TreeItem | undefined | null | void> = new vscode.EventEmitter<vscode.TreeItem | undefined | null | void>();
   readonly onDidChangeTreeData: vscode.Event<vscode.TreeItem | undefined | null | void> = this._onDidChangeTreeData.event;
 

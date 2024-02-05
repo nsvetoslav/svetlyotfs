@@ -3,16 +3,6 @@ import { tf } from "../tfs/tfExe"
 import { parse } from "../tfs/output/parse"
 import { buildVersionControlUrl } from "../tfs/web"
 
-type TfWorkfold = {
-  collection: string
-}
-
-type TfInfo = {
-  localInformation: {
-    serverPath: string
-  }
-}
-
 async function tfWorkfold(fsPath: string): Promise<TfWorkfold> {
   const res = await tf(["workfold", fsPath])
   return parse(res.stdout) as TfWorkfold
@@ -23,7 +13,7 @@ async function tfInfo(fsPath: string): Promise<TfInfo> {
   return parse(res.stdout) as TfInfo
 }
 
-// FIXME: workaround for https://github.com/microsoft/vscode/issues/25852
+// FIXME
 const hasIssue = !String(vscode.Uri.parse("http://host/#test=value")).includes("test=value")
 function applyWorkaround(uri: vscode.Uri, expectedUri: string) {
   if (hasIssue) {

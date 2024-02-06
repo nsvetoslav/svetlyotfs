@@ -2,6 +2,7 @@ import * as vscode from "vscode"
 import { tf } from "../tfs/tfExe"
 import { parse } from "../tfs/output/parse"
 import { buildVersionControlUrl } from "../tfs/web"
+import { TfInfo, TfWorkfold } from "../types/tfTypes"
 
 async function tfWorkfold(fsPath: string): Promise<TfWorkfold> {
   const res = await tf(["workfold", fsPath])

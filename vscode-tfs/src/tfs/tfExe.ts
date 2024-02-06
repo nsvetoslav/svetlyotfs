@@ -13,7 +13,7 @@ export async function tf(args: Array<string>): Promise<{ stdout: string; stderr:
 
   try {
     return pExecFile(tfPath, args)
-  } catch (err) {
+  } catch (err:any) {
     throw new Error(err.stderr ? err.stderr : err.message)
   }
 }

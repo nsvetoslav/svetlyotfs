@@ -1,9 +1,16 @@
-type TfWorkfold = {
+export type TfWorkfold = {
     collection: string
 }
   
-type TfInfo = {
+export type TfInfo = {
     localInformation: {
         serverPath: string
     }
 }
+
+export type Command = {
+    title: string
+    detail?: string
+    command: string
+  }
+  

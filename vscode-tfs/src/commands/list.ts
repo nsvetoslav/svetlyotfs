@@ -1,5 +1,6 @@
 import * as vscode from "vscode"
 import packageJson from "../../package.json"
+import { Command } from "../types/tfTypes"
 
 const excludedCommands = ["vscode-tfs.list"]
 

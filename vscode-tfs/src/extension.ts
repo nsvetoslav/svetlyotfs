@@ -9,8 +9,9 @@ import { openInBrowser } from "./commands/openInBrowser"
 import { undo } from "./commands/undo"
 import { handle } from "./executor"
 import { tf } from "./tfs/tfExe"
-import { compare_files } from "./files/compare"
+import { compare_files } from "./commands/compare"
 import { pendingChangesProvider } from "./globals"
+import { PendingChange } from "./types/pendingChange"
 
 export const commands = [
   { command: "vscode-tfs.get", handler: handle(get) },
@@ -22,6 +23,80 @@ export const commands = [
   { command: "vscode-tfs.list", handler: handle(list) },
   { command : "vscode-tfs.checkoutOnSave", handler: handle(checkoutOnSave)}
 ]
+    
+export class FileTypeDecorationProvider implements vscode.FileDecorationProvider {
+	private _disposables: vscode.Disposable[] = [];
+  constructor() {
+		this._disposables.push(vscode.window.registerFileDecorationProvider(this));
+	} 
+  
+fromFileChangeNodeUri(uri: vscode.Uri): PendingChange | undefined {
+	try {
+		return uri.query ? JSON.parse(uri.query) as PendingChange : undefined;
+	} catch (e) { }
+
+  return undefined;
+}
+
+  onDidChangeFileDecorations?: vscode.Event<vscode.Uri | vscode.Uri[] | undefined> | undefined
+	provideFileDecoration(
+		uri: vscode.Uri,
+		_token: vscode.CancellationToken,
+	): vscode.ProviderResult<vscode.FileDecoration> {
+
+    let pendingChange = this.fromFileChangeNodeUri(uri);
+    if(pendingChange){
+      pendingChange = pendingChange as PendingChange;
+      return {
+        propagate: false,
+        tooltip: "",
+        color: this.color("Add"),
+        badge: this.letter("Add"),
+      };
+    }
+    
+    return undefined;
+	}
+
+  color(status: string): vscode.ThemeColor | undefined {
+		let color: string | undefined = vscode.extensions.getExtension('vscode.git') ? this.remoteReposColors(status) : this.remoteReposColors(status);
+		return color ? new vscode.ThemeColor(color) : undefined;
+	}
+
+  remoteReposColors(status: string): string  {
+		switch (status) {
+			case "Modified":
+				return 'gitDecoration.modifiedResourceForeground';
+			case "Add":
+				return 'gitDecoration.addedResourceForeground';
+			case "delete":
+				return 'gitDecoration.deletedResourceForeground';
+			case "Rename":
+				return 'gitDecoration.renamedResourceForeground';
+      default:
+        return '';
+		}
+	}
+
+  letter(status: string): string {
+		switch (status) {
+			case "Modified":
+				return 'M';
+			case "Add":
+				return 'A';
+			case "Delete":
+				return 'D';
+			case "Rename":
+				return 'R';
+		}
+
+		return '';
+	}
+
+  dispose() {
+	}
+}
+
 
 export function activate(context: vscode.ExtensionContext): void {
   try {
@@ -29,6 +104,7 @@ export function activate(context: vscode.ExtensionContext): void {
   for (const desc of commands) {
     context.subscriptions.push(vscode.commands.registerCommand(desc.command, desc.handler))
   }
+	context.subscriptions.push(new FileTypeDecorationProvider());
  
   } catch (error) {
   console.log(error);    
@@ -65,6 +141,7 @@ export async function checkIsCheckedOut(uri: vscode.Uri) :Promise<string>{
   let res = (await task).stdout;
   return res; 
 }
+
 
 async function handleOnWillSave(event: vscode.TextDocumentWillSaveEvent): Promise<void> {
   let res = await checkIsCheckedOut(event.document.uri);

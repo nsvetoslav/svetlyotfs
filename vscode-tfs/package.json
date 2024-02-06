@@ -12,7 +12,8 @@
         "pretest": "yarn run compile && yarn run lint",
         "test": "mocha -r ts-node/register \"src/**/*.spec.ts\"",
         "lint": "eslint src --ext ts",
-        "fix": "prettier --write \"src/**/*.ts\""
+        "fix": "prettier --write \"src/**/*.ts\"",
+        "start": "node src/extension.js --loadGenerated"
     },
     "devDependencies": {
         "@types/mocha": "^7.0.2",
@@ -29,22 +30,11 @@
         "prettier": "^2.0.5",
         "rimraf": "^3.0.2",
         "ts-node": "^8.10.2",
-        "typescript": "^3.9.5"
+        "typescript": "4.5.5"
     },
     "engines": {
         "vscode": "^1.45.1"
     },
-    "activationEvents": [
-        "onCommand:vscode-tfs.get",
-        "onCommand:vscode-tfs.checkout",
-        "onCommand:vscode-tfs.checkin",
-        "onCommand:vscode-tfs.add",
-        "onCommand:vscode-tfs.delete",
-        "onCommand:vscode-tfs.undo",
-        "onCommand:vscode-tfs.openInBrowser",
-        "onCommand:vscode-tfs.list",
-        "onView:pendingChanges"
-    ],
     "contributes": {
         "viewsContainers": {
             "activitybar": [

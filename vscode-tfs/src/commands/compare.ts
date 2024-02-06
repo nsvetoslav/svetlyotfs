@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import path from 'path';
 import * as vscode from 'vscode';
-import { view } from '../commands/view';
+import { view } from './view';
 
 export async function compare_files(filePath: string,
     contextGlobalStoragePath: string){

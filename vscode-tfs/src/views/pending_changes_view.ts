@@ -5,17 +5,8 @@ import { PendingChange } from '../types/pendingChange';
 
 let root = getRootDirectory();
 
-
 export enum Schemes {
-	File = 'file',
-	Review = 'review',
-	Pr = 'pr',
-	PRNode = 'prnode',
 	FileChange = 'filechange',
-	GithubPr = 'githubpr',
-	GitPr = 'gitpr',
-	VscodeVfs = 'vscode-vfs', // Remote Repository
-	Comment = 'comment' // Comments from the VS Code comment widget
 }
 
 export function toResourceUri(uri: vscode.Uri, item : PendingChange ) {
@@ -57,8 +48,6 @@ export class PendingChangesProvider implements vscode.TreeDataProvider<vscode.Tr
   }
 }
 
-
-
 class FileNode extends vscode.TreeItem {
   constructor(
     public readonly label: string,
@@ -84,7 +73,7 @@ class FileNode extends vscode.TreeItem {
     const directoryPart = path.dirname(relativePath);
 
     // You can customize the icon based on the pending change type
-    this.iconPath = 'C:\\Users\\Svetlyo\\Desktop\\svetlyotfs\\vscode-tfs\\res\\icon-status-modified.svg';
+    this.iconPath = vscode.ThemeIcon.File;
     this.resourceUri = toResourceUri(vscode.Uri.parse('_.'+ path.extname(filePath)), this.pendingChange);    
     this.description = directoryPart;
     this.contextValue = 'checkedOut';

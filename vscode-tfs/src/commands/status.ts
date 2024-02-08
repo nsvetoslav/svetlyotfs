@@ -3,24 +3,6 @@ import { tf } from "../tfs/tfExe"
 import * as xml2js from 'xml2js';
 import { PendingChange } from "../types/pendingChange";
 
-// Use for debug only when no tf.exe is avaliable 
-function getGeneretedPendingChangesDebug(): PendingChange[] {
-  const generatedChanges: PendingChange[] = [];
-
-  for (let i = 1; i <= 10; i++) {
-      const pendingChange: PendingChange = {
-          chg: `Change ${i}`,
-          local: `Local ${i}`,
-          date: `2024-02-05`, 
-          type: `Type ${i}`
-      };
-
-      generatedChanges.push(pendingChange);
-  }
-
-  return generatedChanges;
-}
-
 export function getRootDirectory(): string | undefined {
     let rootDit = '';
     const workspaceFolders = vscode.workspace.workspaceFolders;
@@ -47,14 +29,6 @@ export async function dirStatus(): Promise<PendingChange[]> {
   let path = getRootDirectory();
   const task = tf(["status", "/recursive", "/format:xml", `${path}`]);
   let pendingChanges: PendingChange[] = [];
-
-  // Add this to launch,json if you lack a tf.exe
-  //  "args": ["--loadGenerated"],
-
-  const loadGeneratedChanges: boolean = process.argv.includes('--loadGenerated');
-  if(1){
-    return getGeneretedPendingChangesDebug();
-  }
 
   try {
     let taskResult = await task;

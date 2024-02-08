@@ -18,7 +18,7 @@
     "devDependencies": {
         "@types/mocha": "^7.0.2",
         "@types/node": "^13.11.0",
-        "@types/vscode": "^1.45.1",
+        "@types/vscode": "^1.86.0",
         "@types/xml2js": "^0.4.14",
         "@typescript-eslint/eslint-plugin": "^3.1.0",
         "@typescript-eslint/parser": "^3.1.0",
@@ -62,11 +62,6 @@
                 "enablement": "true"
             },
             {
-                "command": "pendingChanges.refreshEntry",
-                "title": "Modified",
-                "enablement": "true"
-            },
-            {
                 "command": "pendingChanges.compareFiles",
                 "title": "Compare with latest",
                 "enablement": "true"
@@ -75,7 +70,7 @@
                 "command": "pendingChanges.undo",
                 "title": "Undo changes",
                 "enablement": "true"
-            },                    
+            },
             {
                 "command": "vscode-tfs.get",
                 "title": "Get",
@@ -131,12 +126,6 @@
         ],
         "menus": {
             "view/item/context": [
-                {
-                    "command": "pendingChanges.refreshEntry",
-                    "when": "view == pendingChanges",
-                    "group": "inline",
-                    "visible": true
-                },
                 {
                     "command": "pendingChanges.compareFiles",
                     "when": "view == pendingChanges",

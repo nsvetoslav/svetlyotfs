@@ -1,4 +1,0 @@
-==================================================================
-Workspace : WORKSPACE_1 (Nikolov, Svetoslav)
-Collection: http://tfs.server:8080/tfs/prj_collection
- $/prj/server/index.js: D:\data\server\index.js

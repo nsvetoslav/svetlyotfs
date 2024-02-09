@@ -15,6 +15,9 @@
         "fix": "prettier --write \"src/**/*.ts\"",
         "start": "node src/extension.js --loadGenerated"
     },
+    "activationEvents": [
+        "onStartupFinished"
+      ],
     "devDependencies": {
         "@types/mocha": "^7.0.2",
         "@types/node": "^13.11.0",
@@ -33,9 +36,16 @@
         "typescript": "4.5.5"
     },
     "engines": {
-        "vscode": "^1.45.1"
+        "vscode": "^1.86.0"
     },
     "contributes": {
+        "iconThemes": [
+			{
+				"id": "vscode-great-icons",
+				"label": "VSCode Great Icons",
+				"path": "./icons.json"
+			}
+		],
         "viewsContainers": {
             "activitybar": [
                 {
@@ -117,11 +127,6 @@
                 "command": "vscode-tfs.list",
                 "title": "Team Foundation Server...",
                 "category": "TFS"
-            },
-            {
-                "command": "vscode-tfs.checkoutOnSave",
-                "title": "Checkout on save...",
-                "category": "TFS"
             }
         ],
         "menus": {
@@ -174,10 +179,6 @@
             {
                 "command": "vscode-tfs.list",
                 "key": "Alt+T"
-            },
-            {
-                "command": "vscode-tfs.checkoutOnSave",
-                "key": "Ctrl+S"
             }
         ]
     },

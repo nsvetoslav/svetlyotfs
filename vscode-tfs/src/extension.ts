@@ -1,18 +1,11 @@
 import * as vscode from "vscode"
-import { add } from "./commands/add"
-import { checkin } from "./commands/checkin"
-import { checkout } from "./commands/checkout"
-import { del } from "./commands/delete"
-import { get } from "./commands/get"
-import { checkoutOnSave, list } from "./commands/list"
-import { openInBrowser } from "./commands/openInBrowser"
 import { undo } from "./commands/undo"
-import { handle } from "./executor"
 import { tf } from "./tfs/tfExe"
 import { compare_files } from "./commands/compare"
 import { pendingChangesProvider } from "./globals"
 import { PendingChange } from "./types/pendingChange"
 import { TfStatuses } from "./tfs/statuses"
+import { checkout } from "./commands/checkout"
 
 export class FileTypeDecorationProvider implements vscode.FileDecorationProvider {
 	private _disposables: vscode.Disposable[] = [];
@@ -35,28 +28,42 @@ fromFileChangeNodeUri(uri: vscode.Uri): PendingChange | undefined {
 		_token: vscode.CancellationToken,
 	): vscode.ProviderResult<vscode.FileDecoration> {
 
-    let pendingChange = this.fromFileChangeNodeUri(uri);
+    
+    let nodeitem = pendingChangesProvider.getFileNode(uri);
+
+  let pendingChange = this.fromFileChangeNodeUri(uri);
     if(pendingChange){
       pendingChange = pendingChange as PendingChange;
       let item = {
         propagate: false,
-        tooltip: "",
         color: this.color(pendingChange.chg),
 				// badge: new vscode.ThemeIcon('close', new vscode.ThemeColor('list.errorForeground'))
         badge: pendingChange.chg.toString().charAt(0)
       }; 
       return item; 
     }
+    else if(nodeitem != undefined){
+      let item = {
+        propagate: false,
+        color: this.color(nodeitem.pendingChange.chg),
+				// badge: new vscode.ThemeIcon('close', new vscode.ThemeColor('list.errorForeground'))
+        badge: nodeitem.pendingChange.chg.toString().charAt(0)   
+      };
+      return item;
+    }
+
     return undefined;
 	}
 
-  color(status: TfStatuses.TfStatus): vscode.ThemeColor | undefined {
-		let color: string | undefined = this.remoteReposColors(status);
+  color(status: TfStatuses.TfStatus): vscode.ThemeColor {
+		let color: string = this.remoteReposColors(status);
 		return new vscode.ThemeColor(color);
 	}
 
   remoteReposColors(status: TfStatuses.TfStatus): string  {
 		switch (status) {
+      case TfStatuses.TfStatus.AddEditEncoding:
+				return 'gitDecoration.addedResourceForeground';
 			case TfStatuses.TfStatus.Edit:
 				return 'gitDecoration.modifiedResourceForeground';
 			case TfStatuses.TfStatus.Add:
@@ -77,11 +84,78 @@ fromFileChangeNodeUri(uri: vscode.Uri): PendingChange | undefined {
 	}
 }
 
+async function handleFileRename(oldUri: vscode.Uri, newUri: vscode.Uri): Promise<void> {
+  // Your code to handle file renaming goes here
+  console.log('File will be renamed from:', oldUri.fsPath, 'to:', newUri.fsPath);
+}
+
+async function handleFileDeletion(uri: vscode.Uri): Promise<void> {
+  // Your code to handle file deletion goes here
+  console.log('File will be deleted:', uri.fsPath);
+}
+
+async function handleFileCreation(uri: vscode.Uri): Promise<void> {
+  // Your code to handle file creation goes here
+  console.log('File will be created:', uri.fsPath);
+}
+
 export function activate(context: vscode.ExtensionContext): void {
 	context.subscriptions.push(new FileTypeDecorationProvider());
   const saveDisposable = vscode.workspace.onWillSaveTextDocument(event => {
     handleOnWillSave(event);
   });
+
+  vscode.workspace.onWillRenameFiles(async (event) => {
+  // Create an array to store all promises
+    const promises: Promise<void>[] = [];
+  
+    // Loop through each file in the event
+    for (const file of event.files) {
+        // Add each async operation to the array
+        promises.push(handleFileRename(file.oldUri, file.newUri));
+    }
+
+    // Wait until all promises are resolved
+    await Promise.all(promises);
+
+    // Cancel the default behavior
+    event.waitUntil(Promise.resolve());
+  });
+
+  vscode.workspace.onWillDeleteFiles(async (event) => {
+  // Create an array to store all promises
+    const promises: Promise<void>[] = [];
+  
+    // Loop through each file in the event
+    for (const file of event.files) {
+        // Add each async operation to the array
+        promises.push(handleFileDeletion(file));
+    }
+
+    // Wait until all promises are resolved
+    await Promise.all(promises);
+
+    // Cancel the default behavior
+    event.waitUntil(Promise.resolve());
+  });
+
+  vscode.workspace.onWillCreateFiles(async (event) => {
+    // Create an array to store all promises
+    const promises: Promise<void>[] = [];
+  
+    // Loop through each file in the event
+    for (const file of event.files) {
+        // Add each async operation to the array
+        promises.push(handleFileCreation(file));
+    }
+
+    // Wait until all promises are resolved
+    await Promise.all(promises);
+
+    // Cancel the default behavior
+    event.waitUntil(Promise.resolve());
+    // Trigger your custom command
+});
 
   // Make sure to dispose of the event listener when the extension is deactivated
   context.subscriptions.push(saveDisposable);
@@ -106,15 +180,15 @@ async function handleOnWillSave(event: vscode.TextDocumentWillSaveEvent): Promis
     return;
   }
 
-  const userResponse = await vscode.window.showInformationMessage(`Do you want to checkout the file: ${event.document.uri.fsPath}?`,
-    {modal: true},
-    'Yes',
-    'No'
-  );
+  // const userResponse = await vscode.window.showInformationMessage(`Do you want to checkout the file: ${event.document.uri.fsPath}?`,
+  //   {modal: true},
+  //   'Yes',
+  //   'No'
+  // );
 
-  if(userResponse === 'Yes'){
-    return vscode.commands.executeCommand('vscode-tfs.checkout', event.document.uri);
-  } 
+  // if(userResponse === 'Yes'){
+    checkout(event.document.uri);
+  // } 
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function

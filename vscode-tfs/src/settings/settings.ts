@@ -24,7 +24,7 @@ export class Settings {
         return Settings._instance;
     }
 
-    public static setContext(context: vscode.ExtensionContext){
+    public setContext(context: vscode.ExtensionContext){
         Settings._context = context;
         Settings._cache = new SvetlyoTfsCache(Settings._context);
     }

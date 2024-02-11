@@ -21,6 +21,7 @@ export function activate(context: vscode.ExtensionContext): void {
 }
 
 function registerProviders(context: vscode.ExtensionContext) {
+  Settings.getInstance().setContext(context);
   context.subscriptions.push(new PendingChangesViewDecorationProvider());
   context.subscriptions.push(vscode.window.registerTreeDataProvider(
     "pendingChanges",

@@ -18,13 +18,22 @@ export function toResourceUri(uri: vscode.Uri, item : PendingChange ) {
 }
 
 export class PendingChangesProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
-  constructor() {}
+  constructor() {this.loadItems()}
   private _onDidChangeTreeData: vscode.EventEmitter<vscode.TreeItem | undefined | null | void> = new vscode.EventEmitter<vscode.TreeItem | undefined | null | void>();
   readonly onDidChangeTreeData: vscode.Event<vscode.TreeItem | undefined | null | void> = this._onDidChangeTreeData.event;
 
   refresh(): void {
-    this._onDidChangeTreeData.fire();
+    this._onDidChangeTreeData.fire(undefined);
   }
+
+  private async loadItems() {
+    try {
+        await this.getFolderNodes();
+        this.refresh();
+    } catch (error) {
+        vscode.window.showErrorMessage(`Error loading pending changes: ${error}`);
+    }
+}
 
   fileNodes : FileNode[] = [];
 
@@ -35,7 +44,6 @@ export class PendingChangesProvider implements vscode.TreeDataProvider<vscode.Tr
         return nodeFileName === uriFileName;
     });
 }
-
 
   private async getFolderNodes(): Promise<FolderNode[]> {
     try {
@@ -61,28 +69,10 @@ export class PendingChangesProvider implements vscode.TreeDataProvider<vscode.Tr
         throw error;
     }
 }
-  private async getFileNodes(): Promise<FileNode[]> {
-    try {
-     
-    const pendingChanges = await dirStatus();
-
-    return pendingChanges.map((change) => {
-      return new FileNode(path.basename(change.local), vscode.TreeItemCollapsibleState.None, change.local, change);
-    }); 
-    } catch (error) {
-      
-    }
-    throw("");
-  }
-
+  
   getTreeItem(element: vscode.TreeItem): vscode.TreeItem {
     return element;
   }
-
-  // getChildren(): Thenable<vscode.TreeItem[]> {
-    
-  //   return this.getFileNodes();
-  // }
 
   getChildren(element?: vscode.TreeItem): Thenable<vscode.TreeItem[]> {
     if (!element) {
@@ -92,7 +82,7 @@ export class PendingChangesProvider implements vscode.TreeDataProvider<vscode.Tr
     } else {
         return Promise.resolve([]);
     }
-}
+  }
 }
 
 class FolderNode extends vscode.TreeItem {
@@ -132,11 +122,10 @@ class FileNode extends vscode.TreeItem {
     
     if(root === undefined){
       return;
-    }    // Get the relative path from the workspace root
+    } 
     const relativePath = path.relative(root, filePath);
     const directoryPart = path.dirname(relativePath);
 
-    // You can customize the icon based on the pending change type
     this.iconPath = vscode.ThemeIcon.File;
     this.resourceUri = toResourceUri(vscode.Uri.parse('_.'+ path.extname(filePath)), this.pendingChange);    
     this.description = directoryPart;

@@ -23,7 +23,6 @@ fromFileChangeNodeUri(uri: vscode.Uri): PendingChange | undefined {
 		uri: vscode.Uri,
 		_token: vscode.CancellationToken,
 	): vscode.ProviderResult<vscode.FileDecoration> {
-
     
     let nodeitem = pendingChangesProvider.getFileNode(uri);
 
@@ -33,7 +32,6 @@ fromFileChangeNodeUri(uri: vscode.Uri): PendingChange | undefined {
       let item = {
         propagate: false,
         color: this.color(pendingChange.chg),
-				// badge: new vscode.ThemeIcon('close', new vscode.ThemeColor('list.errorForeground'))
         badge: pendingChange.chg.toString().charAt(0)
       }; 
       return item; 
@@ -42,7 +40,6 @@ fromFileChangeNodeUri(uri: vscode.Uri): PendingChange | undefined {
       let item = {
         propagate: false,
         color: this.color(nodeitem.pendingChange.chg),
-				// badge: new vscode.ThemeIcon('close', new vscode.ThemeColor('list.errorForeground'))
         badge: nodeitem.pendingChange.chg.toString().charAt(0)   
       };
       return item;

@@ -11,7 +11,7 @@ import { WorkspaceInfo, get_workspaces } from "./commands/additional";
 import { Settings } from "./settings/settings";
 import { PendingChangesViewDecorationProvider } from "./views/decorations/pending-changes-view-decoation";
 import { pendingChangesProvider } from "./globals";
-import { checkifFileIsUnderSourceControl } from "./commands/status";
+import { TfStatuses } from "./tfs/statuses";
 
 let workspacesStatusBarItem: vscode.StatusBarItem;
 
@@ -46,25 +46,30 @@ export function activate(context: vscode.ExtensionContext): void {
       console.log("Error setting default TFS workspace.", error);
     });
   
-  context.subscriptions.push(new PendingChangesViewDecorationProvider());
+  let decorationprovider = new PendingChangesViewDecorationProvider();
+  context.subscriptions.push(decorationprovider);
   const saveDisposable = vscode.workspace.onWillSaveTextDocument((event) => {
     handleOnWillSave(event);
   });
   context.subscriptions.push(saveDisposable);
+
+  vscode.window.registerTreeDataProvider(
+    "pendingChanges",
+    pendingChangesProvider
+  );
+  
+  pendingChangesProvider.refresh();
 
   vscode.commands.registerCommand("showQuickPick", () =>{
     showQuickPick();
   }
   );
 
-	// register a command that is invoked when the status bar
-	// item is selected
 	const myCommandId = 'tfs.showWorkspaces';
 	context.subscriptions.push(vscode.commands.registerCommand(myCommandId, () => {
     showQuickPick();
 	}));
 
-	// create a new status bar item that we can now manage
 	workspacesStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
 	workspacesStatusBarItem.command = myCommandId;
 	context.subscriptions.push(workspacesStatusBarItem);
@@ -77,11 +82,13 @@ export function activate(context: vscode.ExtensionContext): void {
     let promises: PromiseLike<any>[] = [];
     
     for (const file of event.files) {
-      let res = await checkIsCheckedOut(file.oldUri);
-      if (res === "There are no pending changes.\r\n" || res.length <= 0) {
-        continue;
+      let fileNode  = pendingChangesProvider.getFileNode(file.oldUri);
+      if(fileNode  != undefined){
+        if(fileNode.pendingChange.chg=== TfStatuses.TfStatus.Add || fileNode.pendingChange.chg === TfStatuses.TfStatus.AddEditEncoding){
+          // TODO implementation 
+        }
       }
-    
+
       const promise = handleFileRename(file.oldUri, file.newUri).then(() => {
           console.log(`TF.exe successfully renamed files from  ${file.oldUri.path} to ${file.newUri.path}.`);
         }).then(async () =>{
@@ -90,9 +97,7 @@ export function activate(context: vscode.ExtensionContext): void {
           console.log("pre-deleting file");
           await vscode.workspace.fs.delete(file.newUri, {useTrash: true});
         }).then(() =>{
-        }
-        )
-        .finally(() => {          
+        }).finally(() => {          
           pendingChangesProvider.refresh();
             
          }).catch((error) => {
@@ -105,9 +110,18 @@ export function activate(context: vscode.ExtensionContext): void {
     return event.waitUntil(Promise.all(promises));
   });
 
-  vscode.workspace.onDidRenameFiles( async (event) => {
-    console.log("File renamed from ", event.files[0].oldUri.path, "to ", event.files[0].newUri.path);
-  })
+  // vscode.workspace.onDidRenameFiles( async (event) => {
+  //   event.files.forEach(file => {
+  //     let pgItem  = decorationprovider.fromFileChangeNodeUri(file.oldUri); 
+  //     if(pgItem != undefined && pgItem.chg != TfStatuses.TfStatus.Edit){
+  //       if(pgItem.chg == TfStatuses.TfStatus.Add){
+  //         undo(file.oldUri.path);
+  //         add(file.newUri.path);
+  //         pendingChangesProvider.refresh();
+  //       }
+  //     }
+  //   });
+  // })
 
   vscode.workspace.onWillDeleteFiles(async (event) => {
     const promises: Promise<void>[] = [];
@@ -116,7 +130,6 @@ export function activate(context: vscode.ExtensionContext): void {
     }
     event.waitUntil(Promise.all(promises));
   });
-
 
   vscode.workspace.onWillCreateFiles(async (event) => {
     const promises: Promise<void>[] = [];
@@ -128,10 +141,6 @@ export function activate(context: vscode.ExtensionContext): void {
     event.waitUntil(Promise.all(promises));
   });
 
-  vscode.window.registerTreeDataProvider(
-    "pendingChanges",
-    pendingChangesProvider
-  );
   vscode.commands.registerCommand("pendingChanges.undo", (path: any) =>
     undo(path.filePath)
   );
@@ -167,7 +176,7 @@ async function showQuickPick() {
   }
 }
 
-export async function checkIsCheckedOut(uri: vscode.Uri): Promise<string> {
+export async function  checkIsCheckedOut(uri: vscode.Uri): Promise<string> {
   const task = tf(["status", uri.fsPath]);
   let res = (await task).stdout;
   return res;
@@ -188,7 +197,7 @@ export function deactivate(): void {}
 
 
 function updateWorkspacesStatusBarItem(): void {
-  workspacesStatusBarItem.text = `TFS Workspaces`;
+  workspacesStatusBarItem.text = `[TFS]: Workspaces`;
   workspacesStatusBarItem.tooltip = "Change your TFS workspace";
   workspacesStatusBarItem.show();
   pendingChangesProvider.refresh();

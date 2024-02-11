@@ -70,7 +70,8 @@
                     "contents": "Empty content",
                     "name": "Pending Changes",
                     "icon": "res/tfs.png",
-                    "contextualTitle": "Pending Changes"
+                    "contextualTitle": "Pending Changes",
+                    "type": "tree"
                 }
             ]
         },

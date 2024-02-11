@@ -1,6 +1,6 @@
-import * as vscode from "vscode"
 import { tf } from "../tfs/tfExe"
-import { pendingChangesProvider, removeLeadingSlash } from "../globals"
+import { pendingChangesProvider } from "../globals"
+import { removeLeadingSlash } from "../utilities";
 
 export async function add(path: string): Promise<void> {
   await tf(['add', removeLeadingSlash(path)]);

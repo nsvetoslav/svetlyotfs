@@ -1,5 +1,7 @@
 import * as vscode from "vscode"
 import { SvetlyoTfsCache } from "../cache/cache";
+import { WorkspaceInfo } from "../types/tfTypes";
+import { get_workspaces } from "../commands/additional";
 
 enum SettingNames
 {
@@ -7,15 +9,48 @@ enum SettingNames
 };
 
 export class Settings {
-    constructor(private context: vscode.ExtensionContext) { }
+    private static _instance: Settings;
+    private static _context: vscode.ExtensionContext;
+    private static _cache : SvetlyoTfsCache;
+    private static _workspaceInfo : WorkspaceInfo;
 
-    private cache : SvetlyoTfsCache = new SvetlyoTfsCache(this.context);
+    private constructor() { }
 
-    getActiveTfsWorkspace<T>(){
-        return this.cache.getValue<T>(SettingNames.ActiveWorkspace.toString());
+    public static getInstance(): Settings {
+        if (!Settings._instance) {
+            Settings._instance = new Settings();
+        }
+
+        return Settings._instance;
     }
 
-    setActiveTfsWorkspace(workspaceName: string){
-        this.cache.setValue(SettingNames.ActiveWorkspace.toString(), workspaceName)
+    public static setContext(context: vscode.ExtensionContext){
+        Settings._context = context;
+        Settings._cache = new SvetlyoTfsCache(Settings._context);
+    }
+
+    public getActiveTfsWorkspace<T>(){
+        return Settings._cache.getValue<T>(SettingNames.ActiveWorkspace.toString());
+    }
+
+    public getWorkspaceInfo() : WorkspaceInfo {
+        return Settings._workspaceInfo;
+    }
+
+    public setWorkspaceInfo(){
+        get_workspaces().then((setting) => {
+            if(setting.workspaces.length > 0){
+                if(this.getActiveTfsWorkspace<string>() === undefined){
+                    this.setActiveTfsWorkspace(setting.workspaces[0]);
+                }
+                Settings._workspaceInfo = setting;
+            }
+        }).catch((error) => {
+            console.log("Error setting default TFS workspace.", error);
+        });
+    }
+
+    public setActiveTfsWorkspace(workspaceName: string){
+        Settings._cache.setValue(SettingNames.ActiveWorkspace.toString(), workspaceName)
     }
 }

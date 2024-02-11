@@ -1,7 +1,7 @@
-import { pendingChangesProvider } from "../../globals";
-import { TfStatuses } from "../../tfs/statuses";
-import { PendingChange } from "../../types/pendingChange";
+import { pendingChangesProvider } from "../globals";
+import { TfStatuses } from "../tfs/statuses";
 import * as vscode from 'vscode';
+import { PendingChange } from "../types/tfTypes";
 
 export class PendingChangesViewDecorationProvider implements vscode.FileDecorationProvider {
 	private _disposables: vscode.Disposable[] = [];

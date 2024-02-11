@@ -1,8 +1,9 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
-import { dirStatus, getRootDirectory } from '../commands/status';
-import { PendingChange } from '../types/pendingChange';
+import { dirStatus } from '../commands/status';
 import { TfStatuses } from '../tfs/statuses';
+import { getRootDirectory } from '../utilities';
+import { PendingChange } from '../types/tfTypes';
 
 let root = getRootDirectory();
 
@@ -34,7 +35,6 @@ export class PendingChangesProvider implements vscode.TreeDataProvider<vscode.Tr
         vscode.window.showErrorMessage(`Error loading pending changes: ${error}`);
     }
 }
-
   fileNodes : FileNode[] = [];
 
   getFileNode(uri: vscode.Uri) {

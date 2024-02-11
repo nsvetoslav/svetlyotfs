@@ -1,9 +1,5 @@
 import { tf } from "../tfs/tfExe"
-
-export interface WorkspaceInfo {
-  collection: string;
-  workspaces: string[];
-}
+import { WorkspaceInfo } from "../types/tfTypes";
 
 export async function get_workspaces(){
   const task = tf(["workspaces"])

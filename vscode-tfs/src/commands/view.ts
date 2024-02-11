@@ -9,6 +9,5 @@ export async function view(uri: string, tempuri: string): Promise<any> {
     } catch (error) {
         console.log(error);
     }
-
     return task;
 }

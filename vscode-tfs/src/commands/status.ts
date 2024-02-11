@@ -1,41 +1,6 @@
-import * as vscode from "vscode"
 import { tf } from "../tfs/tfExe"
-import * as xml2js from 'xml2js';
-import { PendingChange } from "../types/pendingChange";
-
-export async function checkifFileIsUnderSourceControl(filePath: string) {
-  try{
-     let res = await tf(['status', filePath, '/recursive'])
-     if(res.stderr.length > 0){
-      return false;
-     }
-    return true;
-  } catch(error){
-    return false;
-  }
-}
-
-export function getRootDirectory(): string | undefined {
-    let rootDit = '';
-    const workspaceFolders = vscode.workspace.workspaceFolders;
-    if (workspaceFolders && workspaceFolders.length > 0) {
-      rootDit = workspaceFolders[0].uri.fsPath;
-    }
-    return rootDit;
-  }
-
-async function parseXmlToObject(xmlData: string): Promise<any> {
-    return new Promise((resolve, reject) => {
-      const parser = new xml2js.Parser({ explicitArray: false, mergeAttrs: true });
-      parser.parseString(xmlData, (err, result) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(result);
-        }
-      });
-    });
-  }
+import { PendingChange } from "../types/tfTypes";
+import { getRootDirectory, parseXmlToObject } from "../utilities";
 
 export async function dirStatus(): Promise<PendingChange[]> {
   let path = getRootDirectory();

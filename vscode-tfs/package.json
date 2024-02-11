@@ -17,8 +17,9 @@
     },
     "activationEvents": [
         "onStartupFinished"
-      ],
+    ],
     "devDependencies": {
+        "@types/jsonfile": "^6.1.4",
         "@types/mocha": "^7.0.2",
         "@types/node": "^13.11.0",
         "@types/vscode": "^1.86.0",
@@ -39,19 +40,26 @@
         "vscode": "^1.86.0"
     },
     "contributes": {
+        "viewsWelcome": [
+            {
+              "view": "tfsData",
+              "contents": "asdasdasd",
+              "when": "workbenchState != empty"
+            }
+          ],
         "iconThemes": [
-			{
-				"id": "vscode-great-icons",
-				"label": "VSCode Great Icons",
-				"path": "./icons.json"
-			}
-		],
+            {
+                "id": "vscode-great-icons",
+                "label": "VSCode Great Icons",
+                "path": "./icons.json"
+            }
+        ],
         "viewsContainers": {
             "activitybar": [
                 {
                     "id": "pending-changes",
                     "title": "Pending Changes",
-                    "icon": "res/4905011.webp"
+                    "icon": "res/tfs.png"
                 }
             ]
         },
@@ -59,8 +67,9 @@
             "pending-changes": [
                 {
                     "id": "pendingChanges",
+                    "contents": "Empty content",
                     "name": "Pending Changes",
-                    "icon": "res/icon.png",
+                    "icon": "res/tfs.png",
                     "contextualTitle": "Pending Changes"
                 }
             ]
@@ -69,6 +78,12 @@
             {
                 "command": "pendingChanges.openFile",
                 "title": "Open file",
+                "enablement": "true"
+            },
+            {
+                "command": "pendingChanges.workspace",
+                "title": "Workspace",
+                "icon": "res/workspace.png",
                 "enablement": "true"
             },
             {
@@ -130,6 +145,12 @@
             }
         ],
         "menus": {
+            "view/title": [
+                {
+                    "command": "pendingChanges.workspace",
+                    "group": "navigation"
+                }
+            ],
             "view/item/context": [
                 {
                     "command": "pendingChanges.compareFiles",
@@ -214,6 +235,9 @@
         "microsoft"
     ],
     "dependencies": {
+        "fs-extra": "^11.2.0",
+        "json-file": "^0.1.0",
+        "jsonfile": "^6.1.0",
         "xml2js": "^0.6.2"
     }
 }

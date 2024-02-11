@@ -51,7 +51,7 @@ export class PendingChangesProvider implements vscode.TreeDataProvider<vscode.Tr
                 folderNodesMap.set(directoryPart, folderNode);
             }
 
-            const fileNode = new FileNode(path.basename(change.local), vscode.TreeItemCollapsibleState.Expanded, change.local, change);
+            const fileNode = new FileNode(path.basename(change.local), vscode.TreeItemCollapsibleState.None, change.local, change);
             this.fileNodes.push(fileNode);
             folderNode.children.push(fileNode);
         }
@@ -110,6 +110,10 @@ class FolderNode extends vscode.TreeItem {
   }
 }
 
+function strikethrough(text: string): string {
+  return text.split('').map(t => t + '\u0336').join('');
+}
+
 class FileNode extends vscode.TreeItem {
   constructor(
     public readonly label: string,
@@ -136,6 +140,16 @@ class FileNode extends vscode.TreeItem {
     this.iconPath = vscode.ThemeIcon.File;
     this.resourceUri = toResourceUri(vscode.Uri.parse('_.'+ path.extname(filePath)), this.pendingChange);    
     this.description = directoryPart;
+    
+    if(this.pendingChange.chg == TfStatuses.TfStatus.Delete){
+      this.label = strikethrough(this.label);
+      this.description = strikethrough(this.description);
+    }
+
+    if(this.pendingChange.chg == TfStatuses.TfStatus.Rename){
+      this.description = this.pendingChange.srcitem;
+    }
+    
     this.contextValue = 'checkedOut';
     this.label = this.label;
   }

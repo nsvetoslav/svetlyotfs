@@ -1,195 +1,137 @@
-import * as vscode from "vscode"
-import { undo } from "./commands/undo"
-import { tf } from "./tfs/tfExe"
-import { compare_files } from "./commands/compare"
-import { pendingChangesProvider } from "./globals"
-import { PendingChange } from "./types/pendingChange"
-import { TfStatuses } from "./tfs/statuses"
-import { checkout } from "./commands/checkout"
+import * as vscode from "vscode";
+import { undo } from "./commands/undo";
+import { tf } from "./tfs/tfExe";
+import { compare_files } from "./commands/compare";
+import { checkout } from "./commands/checkout";
+import { rename } from "./commands/rename";
+import { del } from "./commands/delete";
+import { add } from "./commands/add";
+import * as os from 'os';
+import { WorkspaceInfo, get_workspaces } from "./commands/additional";
+import { Settings } from "./settings/settings";
+import { pendingChangesProvider } from "./views/globals";
+import { PendingChangesViewDecorationProvider } from "./views/decorations/pending-changes-view-decoation";
+1
+let workspaceSettings : WorkspaceInfo;
+let settings : Settings;
 
-export class FileTypeDecorationProvider implements vscode.FileDecorationProvider {
-	private _disposables: vscode.Disposable[] = [];
-  constructor() {
-		this._disposables.push(vscode.window.registerFileDecorationProvider(this));
-	} 
-  
-fromFileChangeNodeUri(uri: vscode.Uri): PendingChange | undefined {
-	try {
-		return uri.query ? JSON.parse(uri.query) as PendingChange : undefined;
-	} catch (e) { }
-
-  
-  return undefined;
-}
-
-  onDidChangeFileDecorations?: vscode.Event<vscode.Uri | vscode.Uri[] | undefined> | undefined
-	provideFileDecoration(
-		uri: vscode.Uri,
-		_token: vscode.CancellationToken,
-	): vscode.ProviderResult<vscode.FileDecoration> {
-
-    
-    let nodeitem = pendingChangesProvider.getFileNode(uri);
-
-  let pendingChange = this.fromFileChangeNodeUri(uri);
-    if(pendingChange){
-      pendingChange = pendingChange as PendingChange;
-      let item = {
-        propagate: false,
-        color: this.color(pendingChange.chg),
-				// badge: new vscode.ThemeIcon('close', new vscode.ThemeColor('list.errorForeground'))
-        badge: pendingChange.chg.toString().charAt(0)
-      }; 
-      return item; 
-    }
-    else if(nodeitem != undefined){
-      let item = {
-        propagate: false,
-        color: this.color(nodeitem.pendingChange.chg),
-				// badge: new vscode.ThemeIcon('close', new vscode.ThemeColor('list.errorForeground'))
-        badge: nodeitem.pendingChange.chg.toString().charAt(0)   
-      };
-      return item;
-    }
-
-    return undefined;
-	}
-
-  color(status: TfStatuses.TfStatus): vscode.ThemeColor {
-		let color: string = this.remoteReposColors(status);
-		return new vscode.ThemeColor(color);
-	}
-
-  remoteReposColors(status: TfStatuses.TfStatus): string  {
-		switch (status) {
-      case TfStatuses.TfStatus.AddEditEncoding:
-				return 'gitDecoration.addedResourceForeground';
-			case TfStatuses.TfStatus.Edit:
-				return 'gitDecoration.modifiedResourceForeground';
-			case TfStatuses.TfStatus.Add:
-				return 'gitDecoration.addedResourceForeground';
-			case TfStatuses.TfStatus.Delete:
-				return 'gitDecoration.deletedResourceForeground';
-			case TfStatuses.TfStatus.Rename:
-				return 'gitDecoration.renamedResourceForeground';
-      default:
-        return '';
-		}
-	}
-
-  dispose() {
-    this._disposables.forEach(disposable => {
-      disposable.dispose();
-    });
-	}
-}
-
-async function handleFileRename(oldUri: vscode.Uri, newUri: vscode.Uri): Promise<void> {
-  // Your code to handle file renaming goes here
-  console.log('File will be renamed from:', oldUri.fsPath, 'to:', newUri.fsPath);
+function handleFileRename(
+  oldUri: vscode.Uri,
+  newUri: vscode.Uri
+) : Promise<{ stdout: string; stderr: string }>{
+  return rename(oldUri.path, newUri.path);
 }
 
 async function handleFileDeletion(uri: vscode.Uri): Promise<void> {
-  // Your code to handle file deletion goes here
-  console.log('File will be deleted:', uri.fsPath);
+  del(uri);
 }
 
 async function handleFileCreation(uri: vscode.Uri): Promise<void> {
-  // Your code to handle file creation goes here
-  console.log('File will be created:', uri.fsPath);
+  add(uri.path);
 }
 
 export function activate(context: vscode.ExtensionContext): void {
-	context.subscriptions.push(new FileTypeDecorationProvider());
-  const saveDisposable = vscode.workspace.onWillSaveTextDocument(event => {
+  settings = new Settings(context);
+  if(settings.getActiveTfsWorkspace() === undefined){
+    get_workspaces().then((setting) => {
+    if(setting.workspaces.length > 0){
+      settings.setActiveTfsWorkspace(setting.workspaces[0]);
+      workspaceSettings = setting;
+    }
+    }).catch((error) => {
+      console.log("Error setting default TFS workspace.", error);
+    });
+  }
+  
+  context.subscriptions.push(new PendingChangesViewDecorationProvider());
+  const saveDisposable = vscode.workspace.onWillSaveTextDocument((event) => {
     handleOnWillSave(event);
   });
+  context.subscriptions.push(saveDisposable);
 
-  vscode.workspace.onWillRenameFiles(async (event) => {
-  // Create an array to store all promises
-    const promises: Promise<void>[] = [];
-  
-    // Loop through each file in the event
+  vscode.workspace.onWillRenameFiles((event) => {
+    let promises: Promise<any>[] = [];
     for (const file of event.files) {
-        // Add each async operation to the array
-        promises.push(handleFileRename(file.oldUri, file.newUri));
+        const promise = handleFileRename(file.oldUri, file.newUri).then(() => {
+          console.log(`TF.exe successfully renamed files from  ${file.oldUri.path} to ${file.newUri.path}.`);
+        }).finally(() => {
+          console.log("Peparing file deletion: ", file.newUri.path);
+          vscode.workspace.fs.delete(file.newUri).then(() =>{
+          console.log("Successfully deleted file: ", file.newUri.path);  
+          });
+        }).catch((error) => {
+          console.log("Error tf.exe - rename files", error);
+        });
+
+        promises.push(promise);
     }
 
-    // Wait until all promises are resolved
-    await Promise.all(promises);
-
-    // Cancel the default behavior
-    event.waitUntil(Promise.resolve());
+    return event.waitUntil(Promise.all(promises));
   });
+
+  vscode.workspace.onDidRenameFiles( async (event) => {
+    console.log("File renamed from ", event.files[0].oldUri.path, "to ", event.files[0].newUri.path);
+  })
 
   vscode.workspace.onWillDeleteFiles(async (event) => {
-  // Create an array to store all promises
     const promises: Promise<void>[] = [];
-  
-    // Loop through each file in the event
     for (const file of event.files) {
-        // Add each async operation to the array
-        promises.push(handleFileDeletion(file));
+      promises.push(handleFileDeletion(file));
     }
-
-    // Wait until all promises are resolved
-    await Promise.all(promises);
-
-    // Cancel the default behavior
-    event.waitUntil(Promise.resolve());
+    event.waitUntil(Promise.all(promises));
   });
 
+
   vscode.workspace.onWillCreateFiles(async (event) => {
-    // Create an array to store all promises
     const promises: Promise<void>[] = [];
-  
-    // Loop through each file in the event
+
     for (const file of event.files) {
-        // Add each async operation to the array
-        promises.push(handleFileCreation(file));
+      promises.push(handleFileCreation(file));
     }
 
-    // Wait until all promises are resolved
-    await Promise.all(promises);
+    event.waitUntil(Promise.all(promises));
+  });
 
-    // Cancel the default behavior
-    event.waitUntil(Promise.resolve());
-    // Trigger your custom command
-});
-
-  // Make sure to dispose of the event listener when the extension is deactivated
-  context.subscriptions.push(saveDisposable);
-  vscode.window.registerTreeDataProvider('pendingChanges', pendingChangesProvider);
-  vscode.commands.registerCommand('pendingChanges.undo', (path: any) =>
+  vscode.window.registerTreeDataProvider(
+    "pendingChanges",
+    pendingChangesProvider
+  );
+  vscode.commands.registerCommand("pendingChanges.undo", (path: any) =>
     undo(path.filePath)
   );
-  vscode.commands.registerCommand('pendingChanges.compareFiles', (path: any) =>
-  compare_files(path.filePath, context.globalStoragePath)
+  vscode.commands.registerCommand("pendingChanges.compareFiles", (path: any) =>
+    compare_files(path.filePath, os.homedir())
   );
+  vscode.commands.registerCommand("pendingChanges.workspace", () => {
+    showQuickPick();
+  });
 }
 
-export async function checkIsCheckedOut(uri: vscode.Uri) :Promise<string>{
+async function showQuickPick() {
+  let quickpickOptions : vscode.QuickPickOptions = {
+    placeHolder: "Choose workspace"    
+  } 
+  const selected = await vscode.window.showQuickPick(workspaceSettings.workspaces, quickpickOptions);
+  if(selected){
+    settings.setActiveTfsWorkspace(selected.toString());    
+  }
+}
+
+export async function checkIsCheckedOut(uri: vscode.Uri): Promise<string> {
   const task = tf(["status", uri.fsPath]);
   let res = (await task).stdout;
-  return res; 
+  return res;
 }
 
-async function handleOnWillSave(event: vscode.TextDocumentWillSaveEvent): Promise<void> {
+async function handleOnWillSave(
+  event: vscode.TextDocumentWillSaveEvent
+): Promise<void> {
   let res = await checkIsCheckedOut(event.document.uri);
-  if(res != 'There are no pending changes.\r\n'){
+  if (res != "There are no pending changes.\r\n") {
     return;
   }
 
-  // const userResponse = await vscode.window.showInformationMessage(`Do you want to checkout the file: ${event.document.uri.fsPath}?`,
-  //   {modal: true},
-  //   'Yes',
-  //   'No'
-  // );
-
-  // if(userResponse === 'Yes'){
-    checkout(event.document.uri);
-  // } 
+  checkout(event.document.uri);
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-function
 export function deactivate(): void {}

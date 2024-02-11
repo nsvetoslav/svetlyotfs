@@ -51,6 +51,7 @@ export async function dirStatus(): Promise<PendingChange[]> {
         local: change.local || '',
         date: change.date || '',
         type: change.type || '',
+        srcitem: change.srcitem || '',
       };
     });
   } catch (error) {

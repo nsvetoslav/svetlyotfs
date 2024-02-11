@@ -9,9 +9,12 @@ import { add } from "./commands/add";
 import * as os from 'os';
 import { WorkspaceInfo, get_workspaces } from "./commands/additional";
 import { Settings } from "./settings/settings";
-import { pendingChangesProvider } from "./views/globals";
 import { PendingChangesViewDecorationProvider } from "./views/decorations/pending-changes-view-decoation";
-1
+import { pendingChangesProvider } from "./globals";
+import { checkifFileIsUnderSourceControl } from "./commands/status";
+
+let workspacesStatusBarItem: vscode.StatusBarItem;
+
 let workspaceSettings : WorkspaceInfo;
 let settings : Settings;
 
@@ -32,16 +35,16 @@ async function handleFileCreation(uri: vscode.Uri): Promise<void> {
 
 export function activate(context: vscode.ExtensionContext): void {
   settings = new Settings(context);
-  if(settings.getActiveTfsWorkspace() === undefined){
     get_workspaces().then((setting) => {
     if(setting.workspaces.length > 0){
-      settings.setActiveTfsWorkspace(setting.workspaces[0]);
+      if(settings.getActiveTfsWorkspace() === undefined){
+        settings.setActiveTfsWorkspace(setting.workspaces[0]);
+      }
       workspaceSettings = setting;
     }
     }).catch((error) => {
       console.log("Error setting default TFS workspace.", error);
     });
-  }
   
   context.subscriptions.push(new PendingChangesViewDecorationProvider());
   const saveDisposable = vscode.workspace.onWillSaveTextDocument((event) => {
@@ -49,17 +52,50 @@ export function activate(context: vscode.ExtensionContext): void {
   });
   context.subscriptions.push(saveDisposable);
 
-  vscode.workspace.onWillRenameFiles((event) => {
-    let promises: Promise<any>[] = [];
+  vscode.commands.registerCommand("showQuickPick", () =>{
+    showQuickPick();
+  }
+  );
+
+	// register a command that is invoked when the status bar
+	// item is selected
+	const myCommandId = 'tfs.showWorkspaces';
+	context.subscriptions.push(vscode.commands.registerCommand(myCommandId, () => {
+    showQuickPick();
+	}));
+
+	// create a new status bar item that we can now manage
+	workspacesStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
+	workspacesStatusBarItem.command = myCommandId;
+	context.subscriptions.push(workspacesStatusBarItem);
+
+	context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(updateWorkspacesStatusBarItem));
+	context.subscriptions.push(vscode.window.onDidChangeTextEditorSelection(updateWorkspacesStatusBarItem));
+	updateWorkspacesStatusBarItem();
+
+  vscode.workspace.onWillRenameFiles(async (event) => {
+    let promises: PromiseLike<any>[] = [];
+    
     for (const file of event.files) {
-        const promise = handleFileRename(file.oldUri, file.newUri).then(() => {
+      let res = await checkIsCheckedOut(file.oldUri);
+      if (res === "There are no pending changes.\r\n" || res.length <= 0) {
+        continue;
+      }
+    
+      const promise = handleFileRename(file.oldUri, file.newUri).then(() => {
           console.log(`TF.exe successfully renamed files from  ${file.oldUri.path} to ${file.newUri.path}.`);
-        }).finally(() => {
-          console.log("Peparing file deletion: ", file.newUri.path);
-          vscode.workspace.fs.delete(file.newUri).then(() =>{
-          console.log("Successfully deleted file: ", file.newUri.path);  
-          });
-        }).catch((error) => {
+        }).then(async () =>{
+          console.log("pre-copying file");
+          await vscode.workspace.fs.copy(file.newUri, file.oldUri);
+          console.log("pre-deleting file");
+          await vscode.workspace.fs.delete(file.newUri, {useTrash: true});
+        }).then(() =>{
+        }
+        )
+        .finally(() => {          
+          pendingChangesProvider.refresh();
+            
+         }).catch((error) => {
           console.log("Error tf.exe - rename files", error);
         });
 
@@ -111,6 +147,20 @@ async function showQuickPick() {
   let quickpickOptions : vscode.QuickPickOptions = {
     placeHolder: "Choose workspace"    
   } 
+
+  let activeWs = settings.getActiveTfsWorkspace<string>();
+  if(activeWs != undefined && (activeWs as string).length > 0){
+    quickpickOptions.placeHolder = (`Current: ${(activeWs as string)}`);
+    workspaceSettings.workspaces.sort((a: string, b: string ) => {
+      console.log(a,b);
+      const activews = (activeWs as unknown);
+      if(a === (activews as string)){
+        return -1;
+      }
+      return 0;
+    })
+  }
+
   const selected = await vscode.window.showQuickPick(workspaceSettings.workspaces, quickpickOptions);
   if(selected){
     settings.setActiveTfsWorkspace(selected.toString());    
@@ -135,3 +185,11 @@ async function handleOnWillSave(
 }
 
 export function deactivate(): void {}
+
+
+function updateWorkspacesStatusBarItem(): void {
+  workspacesStatusBarItem.text = `TFS Workspaces`;
+  workspacesStatusBarItem.tooltip = "Change your TFS workspace";
+  workspacesStatusBarItem.show();
+  pendingChangesProvider.refresh();
+}

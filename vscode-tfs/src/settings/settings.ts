@@ -11,8 +11,8 @@ export class Settings {
 
     private cache : SvetlyoTfsCache = new SvetlyoTfsCache(this.context);
 
-    getActiveTfsWorkspace(){
-        this.cache.getValue(SettingNames.ActiveWorkspace.toString());
+    getActiveTfsWorkspace<T>(){
+        return this.cache.getValue<T>(SettingNames.ActiveWorkspace.toString());
     }
 
     setActiveTfsWorkspace(workspaceName: string){

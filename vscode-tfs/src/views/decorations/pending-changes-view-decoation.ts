@@ -1,4 +1,4 @@
-import { pendingChangesProvider } from "../globals";
+import { pendingChangesProvider } from "../../globals";
 import { TfStatuses } from "../../tfs/statuses";
 import { PendingChange } from "../../types/pendingChange";
 import * as vscode from 'vscode';

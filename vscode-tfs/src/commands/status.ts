@@ -3,6 +3,18 @@ import { tf } from "../tfs/tfExe"
 import * as xml2js from 'xml2js';
 import { PendingChange } from "../types/pendingChange";
 
+export async function checkifFileIsUnderSourceControl(filePath: string) {
+  try{
+     let res = await tf(['status', filePath, '/recursive'])
+     if(res.stderr.length > 0){
+      return false;
+     }
+    return true;
+  } catch(error){
+    return false;
+  }
+}
+
 export function getRootDirectory(): string | undefined {
     let rootDit = '';
     const workspaceFolders = vscode.workspace.workspaceFolders;

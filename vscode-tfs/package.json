@@ -148,7 +148,8 @@
             "view/title": [
                 {
                     "command": "pendingChanges.workspace",
-                    "group": "navigation"
+                    "group": "navigation",
+                    "when": "view == pendingChanges"
                 }
             ],
             "view/item/context": [
@@ -219,7 +220,7 @@
     },
     "readmeFilename": "README.md",
     "displayName": "TFS",
-    "icon": "res/icon.png",
+    "icon": "res/tfs.png",
     "galleryBanner": {
         "color": "#912a2a",
         "theme": "dark"

@@ -35,7 +35,7 @@ Your feedback is valuable! If you encounter any issues or have suggestions for i
 Contributions are also welcome! If you'd like to contribute to the development of SvetlyoTfs, feel free to submit a pull request.
 
 ## License
-This extension is licensed under the [MIT License](LICENSE).
+This extension is licensed under the [MIT License]
 
 ---
 

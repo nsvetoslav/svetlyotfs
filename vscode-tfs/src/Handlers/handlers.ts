@@ -1,6 +1,7 @@
 import * as vscode from 'vscode'
 import { TeamServer } from '../TeamServer/teamserver';
 import { FileNode, PendingChangesSCM } from '../scm/view/pendingchanges';
+import * as path from 'path';
 
 export namespace VscodeActionHandlerFunctions {
     export async function renameFiles(files: ReadonlyArray< {
@@ -14,15 +15,11 @@ export namespace VscodeActionHandlerFunctions {
         readonly newUri: vscode.Uri;
     }>) {
         for (const file of files) {
-            const fileNode = PendingChangesSCM.getInstance().getFileNode(file.oldUri);
-            if(fileNode === undefined) {
-                continue;
-            }        
-
             try {
                 await TeamServer.getInstance().rename(file.oldUri, file.newUri);
                 await vscode.workspace.fs.copy(file.newUri, file.oldUri);
                 await vscode.workspace.fs.delete(file.newUri, {useTrash: true});
+                vscode.window.showInformationMessage(`TFS: ${path.basename(file.oldUri.fsPath)} is successfully renamed in version control to ${path.basename(file.newUri.fsPath)}.`);
             } catch (error) {
             }
         }

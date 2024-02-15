@@ -101,12 +101,17 @@ export class TeamServer {
     }
 
     public async rename(oldUri: vscode.Uri, newUri: vscode.Uri) {
-        try{
-            await tf([TeamServerCommands.Rename, Utilities.removeLeadingSlash(oldUri), Utilities.removeLeadingSlash(newUri)]);
-            vscode.window.showInformationMessage(`TFS: ${path.basename(oldUri.fsPath)} is successfully renamed in version control to ${path.basename(newUri.fsPath)}.`);
-        } catch(error: any) {
+        let result: Promise<{ stdout: string; stderr: string }> = new Promise<{ stdout: string; stderr: string }>((resolve) => {
+            resolve({ stderr: '', stdout: '' });
+        });
+    
+        try {
+            result = tf([TeamServerCommands.Rename, Utilities.removeLeadingSlash(oldUri), Utilities.removeLeadingSlash(newUri)]);
+            return result;
+        } catch (error: any) {
             vscode.window.showErrorMessage(`TFS: Renaming ${path.basename(oldUri.fsPath)} to ${path.basename(newUri.fsPath)} in version control failed. Error: ${error.message}.`);
-        } 
+            return result; // Assuming you want to return the promise even in case of error
+        }
     }
 
     public async status(uri: vscode.Uri) {

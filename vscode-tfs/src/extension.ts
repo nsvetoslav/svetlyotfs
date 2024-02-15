@@ -26,33 +26,55 @@ function registerProviders(context: vscode.ExtensionContext) {
 }
 
 function registerHandlers(context: vscode.ExtensionContext){
+  // Save document
   context.subscriptions.push(vscode.workspace.onWillSaveTextDocument( async (event) => {
     return await VscodeActionHandlerFunctions.onSaveDocument(event.document.uri)
   }));
 
-  vscode.workspace.onWillRenameFiles(async (event) => {
+  context.subscriptions.push(vscode.workspace.onDidSaveTextDocument(async () => {
+    return await PendingChangesSCM.getInstance().refresh();
+  }))
+
+  // Rename files
+  context.subscriptions.push(vscode.workspace.onWillRenameFiles(async (event) => {
     return await event.waitUntil(VscodeActionHandlerFunctions.renameFiles(event.files));
-  });
+  }));
 
-  vscode.workspace.onWillDeleteFiles(async (event) => { 
+  context.subscriptions.push(vscode.workspace.onDidRenameFiles(async () => {
+    return await PendingChangesSCM.getInstance().refresh();
+  }));
+
+  // Delete files
+  context.subscriptions.push(vscode.workspace.onWillDeleteFiles(async (event) => { 
     return await event.waitUntil(VscodeActionHandlerFunctions.deleteFiles(event.files));
-  });
+  }));
 
-  vscode.workspace.onWillCreateFiles(async (event) => {
+  context.subscriptions.push(vscode.workspace.onDidDeleteFiles(async () => {
+    return await PendingChangesSCM.getInstance().refresh();
+  }));
+
+  // Create files
+  context.subscriptions.push(vscode.workspace.onWillCreateFiles(async (event) => {
     return await event.waitUntil(VscodeActionHandlerFunctions.createFiles(event.files));
-  });
+  }));
 
-  vscode.commands.registerCommand("pendingChanges.undo", async (uri: any) => {
-    return await VscodeActionHandlerFunctions.undo(uri);
-  });
+  context.subscriptions.push(vscode.workspace.onDidCreateFiles(async () => {
+    return await PendingChangesSCM.getInstance().refresh();
+  }));
+
+  // Commands registration
+  context.subscriptions.push(vscode.commands.registerCommand("pendingChanges.undo", async (uri: any) => {
+    await VscodeActionHandlerFunctions.undo(uri);
+    return await PendingChangesSCM.getInstance().refresh();
+  }));
   
   vscode.commands.registerCommand("pendingChanges.compareFiles", async (uri: any) => {
     return await VscodeActionHandlerFunctions.compareFileWithLatest(uri)
   });
 
-  vscode.commands.registerCommand("pendingChanges.workspace", async () => {
+  context.subscriptions.push(vscode.commands.registerCommand("pendingChanges.workspace", async () => {
     showTFSWorkspacesQuickPick();
-  });
+  }));
 }
 
 function addTFSWorkspaceStatusBaritem(context: vscode.ExtensionContext) {

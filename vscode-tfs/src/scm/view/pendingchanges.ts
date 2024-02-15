@@ -116,7 +116,7 @@ function strikethrough(text: string): string {
   return text.split('').map(t => t + '\u0336').join('');
 }
 
-class FileNode extends vscode.TreeItem {
+export class FileNode extends vscode.TreeItem {
   constructor(
     public readonly label: string,
     public readonly collapsibleState: vscode.TreeItemCollapsibleState,

@@ -5,6 +5,7 @@ import * as fs from 'fs'
 import { tf } from "../tfs/tfExe";
 import { Utilities } from './utils';
 import { TfTypes } from './types';
+import { FileNode } from "../scm/view/pendingchanges";
 
 enum TeamServerCommands {
     Add = "Add",
@@ -64,20 +65,20 @@ export class TeamServer {
         } 
     }
 
-    public async compare(localUri: vscode.Uri) {
+    public async compare(localUri: FileNode) {
         const temporaryFilePath = Utilities.generateTemporaryFileNameFromUri(localUri);
         try {
-            await tf([TeamServerCommands.View, Utilities.removeLeadingSlash(localUri), 
+            await tf([TeamServerCommands.View, localUri.filePath, 
                 `${TeamServerCommandLineArgs.OutputDirectory}:${temporaryFilePath}`])
 
-                await vscode.workspace.openTextDocument(temporaryFilePath);
-                await vscode.workspace.openTextDocument(localUri.fsPath);
+                const temporaryDocument = await vscode.workspace.openTextDocument(temporaryFilePath);
+                const localDocument = await vscode.workspace.openTextDocument(localUri.filePath);
                 
-                vscode.commands.executeCommand("vscode.diff", temporaryFilePath, localUri.fsPath).then(() => {
+                vscode.commands.executeCommand("vscode.diff", temporaryDocument.uri, localDocument.uri).then(() => {
                     fs.unlinkSync(temporaryFilePath);
                 });
             } catch (error: any) {
-            vscode.window.showErrorMessage(`TFS: Comparing ${path.basename(localUri.fsPath)} with latest failed. Error: ${error.message}.`);
+            vscode.window.showErrorMessage(`TFS: Comparing ${path.basename(localUri.filePath)} with latest failed. Error: ${error.message}.`);
         }
     }
 
@@ -125,12 +126,12 @@ export class TeamServer {
         return undefined;
     }
 
-    public async undo(uri: vscode.Uri) {
+    public async undo(uri: FileNode) {
         try{
-            await tf([TeamServerCommands.Undo, Utilities.removeLeadingSlash(uri), TeamServerCommandLineArgs.Recursive]);
-            vscode.window.showInformationMessage(`TFS: Successfully undoing changes in version control for ${path.basename(uri.fsPath)}.`);
+            await tf([TeamServerCommands.Undo, uri.filePath, TeamServerCommandLineArgs.Recursive]);
+            vscode.window.showInformationMessage(`TFS: Undoing changes in version control for ${path.basename(uri.filePath)} completed successfully.`);
         } catch(error: any) {
-            vscode.window.showErrorMessage(`TFS: Undoing changes for ${path.basename(uri.fsPath)} failed. Error: ${error.message}.`);
+            vscode.window.showErrorMessage(`TFS: Undoing changes for ${path.basename(uri.filePath)} failed. Error: ${error.message}.`);
         } 
     }
 

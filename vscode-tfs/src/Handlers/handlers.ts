@@ -1,6 +1,6 @@
 import * as vscode from 'vscode'
 import { TeamServer } from '../TeamServer/teamserver';
-import { PendingChangesSCM } from '../scm/view/pendingchanges';
+import { FileNode, PendingChangesSCM } from '../scm/view/pendingchanges';
 
 export namespace VscodeActionHandlerFunctions {
     export async function renameFiles(files: ReadonlyArray< {
@@ -46,11 +46,11 @@ export namespace VscodeActionHandlerFunctions {
         return Promise.all(promises);
     }
 
-    export function undo(file: vscode.Uri) {
+    export function undo(file: FileNode) {
         return TeamServer.getInstance().undo(file);
     }
 
-    export async function compareFileWithLatest(file: vscode.Uri) {
+    export async function compareFileWithLatest(file: FileNode) {
         return TeamServer.getInstance().compare(file);
     }
 

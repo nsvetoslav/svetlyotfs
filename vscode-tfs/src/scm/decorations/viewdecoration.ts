@@ -1,7 +1,7 @@
-import { pendingChangesProvider } from "../globals";
-import { TfStatuses } from "../tfs/statuses";
 import * as vscode from 'vscode';
-import { PendingChange } from "../types/tfTypes";
+import { TfStatuses } from '../../tfs/statuses';
+import { TfTypes } from '../../TeamServer/types';
+import { PendingChangesSCM } from '../view/pendingchanges';
 
 export class PendingChangesViewDecorationProvider implements vscode.FileDecorationProvider {
 	private _disposables: vscode.Disposable[] = [];
@@ -9,9 +9,9 @@ export class PendingChangesViewDecorationProvider implements vscode.FileDecorati
 		this._disposables.push(vscode.window.registerFileDecorationProvider(this));
 	} 
   
-fromFileChangeNodeUri(uri: vscode.Uri): PendingChange | undefined {
+fromFileChangeNodeUri(uri: vscode.Uri): TfTypes.PendingChange | undefined {
 	try {
-		return uri.query ? JSON.parse(uri.query) as PendingChange : undefined;
+		return uri.query ? JSON.parse(uri.query) as TfTypes.PendingChange : undefined;
 	} catch (e) { }
 
   
@@ -24,11 +24,11 @@ fromFileChangeNodeUri(uri: vscode.Uri): PendingChange | undefined {
 		_token: vscode.CancellationToken,
 	): vscode.ProviderResult<vscode.FileDecoration> {
     
-    let nodeitem = pendingChangesProvider.getFileNode(uri);
+    let nodeitem = PendingChangesSCM.getInstance().getFileNode(uri);
 
   let pendingChange = this.fromFileChangeNodeUri(uri);
     if(pendingChange){
-      pendingChange = pendingChange as PendingChange;
+      pendingChange = pendingChange as TfTypes.PendingChange;
       let item = {
         propagate: false,
         color: this.color(pendingChange.chg),

@@ -1,25 +1,33 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
-import { dirStatus } from '../commands/status';
-import { TfStatuses } from '../tfs/statuses';
-import { getRootDirectory } from '../utilities';
-import { PendingChange } from '../types/tfTypes';
-
-let root = getRootDirectory();
+import { TfStatuses } from '../../tfs/statuses';
+import { TfTypes } from '../../TeamServer/types';
+import { Utilities } from '../../TeamServer/utils';
+import { TeamServer } from '../../TeamServer/teamserver';
 
 export enum Schemes {
 	FileChange = 'filechange',
 }
 
-export function toResourceUri(uri: vscode.Uri, item : PendingChange ) {
+export function toResourceUri(uri: vscode.Uri, item : TfTypes.PendingChange ) {
   return uri.with({
 		scheme: Schemes.FileChange,
 		query: JSON.stringify(item),
 	});
 }
 
-export class PendingChangesProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
-  constructor() {this.loadItems()}
+export class PendingChangesSCM implements vscode.TreeDataProvider<vscode.TreeItem> {
+  private static instance: PendingChangesSCM;
+  private constructor() {this.loadItems()}
+
+  public static getInstance(): PendingChangesSCM {
+    if (!PendingChangesSCM.instance) {
+      PendingChangesSCM.instance = new PendingChangesSCM();
+    }
+
+    return PendingChangesSCM.instance;
+}
+
   private _onDidChangeTreeData: vscode.EventEmitter<vscode.TreeItem | undefined | null | void> = new vscode.EventEmitter<vscode.TreeItem | undefined | null | void>();
   readonly onDidChangeTreeData: vscode.Event<vscode.TreeItem | undefined | null | void> = this._onDidChangeTreeData.event;
 
@@ -47,7 +55,11 @@ export class PendingChangesProvider implements vscode.TreeDataProvider<vscode.Tr
 
   private async getFolderNodes(): Promise<FolderNode[]> {
     try {
-        const pendingChanges = await dirStatus();
+        const pendingChanges = await TeamServer.getInstance().status(vscode.Uri.parse(Utilities.getWorkspaceDirectory()));
+        if(pendingChanges === undefined){
+            return [];
+        }
+
         const folderNodesMap = new Map<string, FolderNode>();
 
         for (const change of pendingChanges) {
@@ -109,7 +121,7 @@ class FileNode extends vscode.TreeItem {
     public readonly label: string,
     public readonly collapsibleState: vscode.TreeItemCollapsibleState,
     public readonly filePath: string,
-    public readonly pendingChange: PendingChange
+    public readonly pendingChange: TfTypes.PendingChange
   ) {
     super(label, vscode.TreeItemCollapsibleState.Expanded);
 
@@ -120,10 +132,10 @@ class FileNode extends vscode.TreeItem {
       arguments: [vscode.Uri.file(this.filePath)],
   };
     
-    if(root === undefined){
+    if(Utilities.getWorkspaceDirectory() === undefined){
       return;
     } 
-    const relativePath = path.relative(root, filePath);
+    const relativePath = path.relative(Utilities.getWorkspaceDirectory(), filePath);
     const directoryPart = path.dirname(relativePath);
 
     this.iconPath = vscode.ThemeIcon.File;

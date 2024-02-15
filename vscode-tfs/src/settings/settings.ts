@@ -1,7 +1,7 @@
 import * as vscode from "vscode"
 import { SvetlyoTfsCache } from "../cache/cache";
-import { WorkspaceInfo } from "../types/tfTypes";
-import { get_workspaces } from "../commands/additional";
+import { TfTypes } from '../TeamServer/types';
+import { TeamServer } from "../TeamServer/teamserver";
 
 enum SettingNames
 {
@@ -12,7 +12,7 @@ export class Settings {
     private static _instance: Settings;
     private static _context: vscode.ExtensionContext;
     private static _cache : SvetlyoTfsCache;
-    private static _workspaceInfo : WorkspaceInfo;
+    private static _workspaceInfo : TfTypes.WorkspaceInfo;
 
     private constructor() { }
 
@@ -33,13 +33,13 @@ export class Settings {
         return Settings._cache.getValue<T>(SettingNames.ActiveWorkspace.toString());
     }
 
-    public getWorkspaceInfo() : WorkspaceInfo {
+    public getWorkspaceInfo() : TfTypes.WorkspaceInfo {
         return Settings._workspaceInfo;
     }
 
     public setWorkspaceInfo(){
-        get_workspaces().then((setting) => {
-            if(setting.workspaces.length > 0){
+        TeamServer.getInstance().getWorkspaces().then((setting) => {
+            if(setting && setting.workspaces.length > 0){
                 if(this.getActiveTfsWorkspace<string>() === undefined){
                     this.setActiveTfsWorkspace(setting.workspaces[0]);
                 }

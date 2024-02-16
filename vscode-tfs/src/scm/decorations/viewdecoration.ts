@@ -24,25 +24,31 @@ fromFileChangeNodeUri(uri: vscode.Uri): TfTypes.PendingChange | undefined {
 		_token: vscode.CancellationToken,
 	): vscode.ProviderResult<vscode.FileDecoration> {
     
-    let nodeitem = PendingChangesSCM.getInstance().getFileNode(uri);
+    const fileNode = PendingChangesSCM.getInstance().getFileNode(uri);
+    const folderNode = PendingChangesSCM.getInstance().getFolderNode(uri);
+    let pendingChange = this.fromFileChangeNodeUri(uri);
 
-  let pendingChange = this.fromFileChangeNodeUri(uri);
-    if(pendingChange){
-      pendingChange = pendingChange as TfTypes.PendingChange;
-      let item = {
-        propagate: false,
-        color: this.color(pendingChange.chg),
-        badge: pendingChange.chg.toString().charAt(0)
+    if(pendingChange) {
+        pendingChange = pendingChange as TfTypes.PendingChange;
+        return {
+          propagate: false,
+          color: this.color(pendingChange.chg),
+          badge: pendingChange.chg.toString().charAt(0)
       }; 
-      return item; 
     }
-    else if(nodeitem != undefined){
-      let item = {
+    else if(fileNode != undefined){
+      return {
         propagate: false,
-        color: this.color(nodeitem.pendingChange.chg),
-        badge: nodeitem.pendingChange.chg.toString().charAt(0)   
+        color: this.color(fileNode.pendingChange.chg),
+        badge: fileNode.pendingChange.chg.toString().charAt(0)   
       };
-      return item;
+    }
+    else if(folderNode != undefined){
+      return {
+        propagate: false,
+        color: this.color(folderNode.pendingChange.chg),
+        badge: folderNode.pendingChange.chg.toString().charAt(0)   
+      };
     }
 
     return undefined;
@@ -55,6 +61,8 @@ fromFileChangeNodeUri(uri: vscode.Uri): TfTypes.PendingChange | undefined {
 
   remoteReposColors(status: TfStatuses.TfStatus): string  {
 		switch (status) {
+      case TfStatuses.TfStatus.AddEncoding:
+				return 'gitDecoration.addedResourceForeground';
       case TfStatuses.TfStatus.AddEditEncoding:
 				return 'gitDecoration.addedResourceForeground';
 			case TfStatuses.TfStatus.Edit:

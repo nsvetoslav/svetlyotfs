@@ -10,6 +10,10 @@ export class Utilities {
         return uri.path.replace(/^\//, '');
     }
 
+    static replaceForwardSlashes(input: string): string {
+        return input.replace(/\//g, '\\');
+    }
+
     static removeLastDirectory(uri: string): string {
         const parts = uri.split('/'); 
         parts.pop(); 

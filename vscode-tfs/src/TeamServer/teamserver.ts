@@ -7,6 +7,7 @@ import { tf } from "../tfs/tfExe";
 import { FileNode } from "../scm/view/pendingchanges";
 import { Utilities } from "./utils";
 import { TfTypes } from "./types";
+import { Settings } from "../settings/settings";
 
 enum TeamServerCommands {
     Add = "add",
@@ -19,12 +20,17 @@ enum TeamServerCommands {
     Undo = "undo",
     Status = "status",
     Workspaces = "workspaces",
+    Reconcile = "reconcile"
 }
 
 enum TeamServerCommandLineArgs {
     Recursive = "/recursive",
     OutputDirectory = "/output",
-    XmlFormat = "/format:xml"
+    XmlFormat = "/format:xml",
+    Workspace = "/workspace:",
+    NoPrompt = "/noprompt",
+    Adds = "/adds",
+    Promote = "/promote"
 }
 
 export class TeamServer {
@@ -39,9 +45,18 @@ export class TeamServer {
         return TeamServer.instance;
     }
 
+    private getActiveWorkspace () : string | undefined {
+        return Settings.getInstance().getActiveTfsWorkspace();
+    }
+
+    private getActiveWorkspaceAsCommandLineArgument() : string {
+        return this.getActiveWorkspace() ? TeamServerCommandLineArgs.Workspace + this.getActiveWorkspace() : '';
+    }
+
     public async add(uri: vscode.Uri) {
         try{
-            await tf([TeamServerCommands.Add, Utilities.removeLeadingSlash(uri)]);
+            await tf([TeamServerCommands.Add, Utilities.removeLeadingSlash(uri), TeamServerCommandLineArgs.NoPrompt]);
+            // await tf([TeamServerCommands.Reconcile, TeamServerCommandLineArgs.Promote, TeamServerCommandLineArgs.Adds, TeamServerCommandLineArgs.NoPrompt]);
             vscode.window.showInformationMessage(`TFS: ${path.basename(uri.fsPath)} succesfully added in version control.`);
         } catch(error: any) {
             vscode.window.showErrorMessage(`TFS: Adding ${path.basename(uri.fsPath)} in version control failed. Error: ${error.message}.`);
@@ -50,7 +65,7 @@ export class TeamServer {
 
     public async checkIn(uri: vscode.Uri) {
         try {
-            await tf([TeamServerCommands.CheckIn, Utilities.removeLeadingSlash(uri), TeamServerCommandLineArgs.Recursive])
+            await tf([TeamServerCommands.CheckIn, this.getActiveWorkspaceAsCommandLineArgument(), Utilities.removeLeadingSlash(uri), TeamServerCommandLineArgs.Recursive])
             vscode.window.showInformationMessage(`TFS: ${path.basename(uri.fsPath)} succesfully checked in version control.`);
         } catch (error: any) {
             vscode.window.showErrorMessage(`TFS: Checking ${path.basename(uri.fsPath)} in version control failed. Error: ${error.message}.`);
@@ -59,7 +74,7 @@ export class TeamServer {
 
     public async checkOut(uri: vscode.Uri) {
         try {
-            await tf([TeamServerCommands.CheckOut, Utilities.removeLeadingSlash(uri), TeamServerCommandLineArgs.Recursive])
+            await tf([TeamServerCommands.CheckOut, this.getActiveWorkspaceAsCommandLineArgument(), Utilities.removeLeadingSlash(uri), TeamServerCommandLineArgs.Recursive])
             vscode.window.showInformationMessage(`TFS: ${path.basename(uri.fsPath)} succesfully checked out in version control.`);
         } catch (error: any) {
             vscode.window.showErrorMessage(`TFS: Checking out ${path.basename(uri.fsPath)} in version control failed. Error: ${error.message}.`);
@@ -85,7 +100,7 @@ export class TeamServer {
 
     public async delete(uri: vscode.Uri) {
         try{
-            await tf([TeamServerCommands.Delete, Utilities.removeLeadingSlash(uri), TeamServerCommandLineArgs.Recursive]);
+            await tf([TeamServerCommands.Delete, this.getActiveWorkspaceAsCommandLineArgument(), Utilities.removeLeadingSlash(uri), TeamServerCommandLineArgs.Recursive]);
             vscode.window.showInformationMessage(`TFS: ${path.basename(uri.fsPath)} succesfully deleted from version control.`);
         } catch(error: any) {
             vscode.window.showErrorMessage(`TFS: Deleting ${path.basename(uri.fsPath)} failed. Error: ${error.message}.`);
@@ -94,7 +109,7 @@ export class TeamServer {
 
     public async get(uri: vscode.Uri) {
         try{
-            await tf([TeamServerCommands.Get, Utilities.removeLeadingSlash(uri), TeamServerCommandLineArgs.Recursive]);
+            await tf([TeamServerCommands.Get, this.getActiveWorkspaceAsCommandLineArgument(), Utilities.removeLeadingSlash(uri), TeamServerCommandLineArgs.Recursive]);
             vscode.window.showInformationMessage(`TFS: ${path.basename(uri.fsPath)} is now latest.`);
         } catch(error: any) {
             vscode.window.showErrorMessage(`TFS: Getting ${path.basename(uri.fsPath)} failed. Error: ${error.message}.`);
@@ -111,6 +126,7 @@ export class TeamServer {
 
         try {
             tfTask = await tf([TeamServerCommands.Status, 
+                this.getActiveWorkspaceAsCommandLineArgument(),
                 TeamServerCommandLineArgs.Recursive,
                 TeamServerCommandLineArgs.XmlFormat,
                 `${Utilities.removeLeadingSlash(uri)}`]);
@@ -125,7 +141,7 @@ export class TeamServer {
 
     public async undo(uri: FileNode | FileNode) {
         try{
-            await tf([TeamServerCommands.Undo, uri.getPath(), TeamServerCommandLineArgs.Recursive]);
+            await tf([TeamServerCommands.Undo, uri.getPath(), this.getActiveWorkspaceAsCommandLineArgument(), TeamServerCommandLineArgs.Recursive]);
             vscode.window.showInformationMessage(`TFS: Undoing changes in version control for ${path.basename(uri.filePath)} completed successfully.`);
         } catch(error: any) {
             vscode.window.showErrorMessage(`TFS: Undoing changes for ${path.basename(uri.filePath)} failed. Error: ${error.message}.`);
@@ -161,7 +177,7 @@ export class TeamServer {
 
     public async checkIsCheckedOut(uri: vscode.Uri) {
         try {
-            const task = await tf([TeamServerCommands.Status, Utilities.removeLeadingSlash(uri)]);
+            const task = await tf([TeamServerCommands.Status, this.getActiveWorkspaceAsCommandLineArgument(), Utilities.removeLeadingSlash(uri)]);
             if (task != 'There are no pending changes.\r\n') {
                 return true;
             }

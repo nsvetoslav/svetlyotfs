@@ -1,5 +1,6 @@
 export namespace TfStatuses{
     export enum TfStatus{
+        AddEncoding = "Add Encoding",
         AddEditEncoding = "Add Edit Encoding",
         Add = "Add",
         Branch = "Branch",
@@ -18,6 +19,8 @@ export namespace TfStatuses{
 
     export function getDescriptionText(state: TfStatus){
     switch(state){
+        case TfStatus.AddEncoding:
+            return 'The file is added';
         case TfStatus.AddEditEncoding:
             return 'The file is added';
         case TfStatus.Add:

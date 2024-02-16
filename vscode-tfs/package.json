@@ -82,7 +82,7 @@
                 "enablement": "true"
             },
             {
-                "command": "pendingChanges.workspace",
+                "command": "tfs.statusbar.workspace",
                 "title": "Workspace",
                 "icon": "res/workspace.png",
                 "enablement": "true"
@@ -147,11 +147,6 @@
         ],
         "menus": {
             "view/title": [
-                {
-                    "command": "pendingChanges.workspace",
-                    "group": "navigation",
-                    "when": "view == pendingChanges"
-                }
             ],
             "view/item/context": [
                 {

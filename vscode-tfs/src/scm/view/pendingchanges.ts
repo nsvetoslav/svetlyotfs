@@ -9,13 +9,6 @@ export enum Schemes {
 	FileChange = 'filechange',
 }
 
-export function toResourceUri(uri: vscode.Uri, item : TfTypes.PendingChange ) {
-  return uri.with({
-		scheme: Schemes.FileChange,
-		query: JSON.stringify(item),
-	});
-}
-
 export class PendingChangesSCM implements vscode.TreeDataProvider<vscode.TreeItem> {
   private static instance: PendingChangesSCM;
   private constructor() {this.loadItems()}
@@ -44,31 +37,40 @@ export class PendingChangesSCM implements vscode.TreeDataProvider<vscode.TreeIte
     }
 }
   fileNodes : FileNode[] = [];
+  folderNodesMap = new Map<string, FolderNode>();
+  folderNodesArray : FolderNode[]= [];
 
   getFileNode(uri: vscode.Uri) {
-    const uriFileName = path.basename(uri.fsPath);
     return this.fileNodes.find(element => {
-        const nodeFileName = path.basename(element.filePath);
-        return nodeFileName === uriFileName;
+      return element.filePath.toLowerCase() === Utilities.removeLeadingSlash(uri).toLowerCase()
+    }); 
+  }
+
+  getFolderNode(uri: vscode.Uri) {
+    return this.folderNodesArray.find(element => {
+      const a = element.getPath().toLowerCase();
+      const b = Utilities.replaceForwardSlashes(Utilities.removeLeadingSlash(uri).toLowerCase());
+      return a === b;
     });
-}
+  }
 
   private async getFolderNodes(): Promise<FolderNode[]> {
     try {
+        this.folderNodesMap.clear();
+        this.fileNodes.slice(0, 0);
+
         const pendingChanges = await TeamServer.getInstance().status(vscode.Uri.parse(Utilities.getWorkspaceDirectory()));
         if(pendingChanges === undefined){
             return [];
         }
 
-        const folderNodesMap = new Map<string, FolderNode>();
-
         for (const change of pendingChanges) {
             const directoryPart = path.dirname(change.local);
-            let folderNode = folderNodesMap.get(directoryPart);
+            let folderNode = this.folderNodesMap.get(directoryPart);
 
             if (!folderNode) {
-                folderNode = new FolderNode(path.basename(directoryPart), vscode.TreeItemCollapsibleState.Expanded, [], directoryPart);
-                folderNodesMap.set(directoryPart, folderNode);
+                folderNode = new FolderNode(path.basename(directoryPart), vscode.TreeItemCollapsibleState.Expanded, [], directoryPart, change);
+                this.folderNodesMap.set(directoryPart, folderNode);
             }
 
             const fileNode = new FileNode(path.basename(change.local), vscode.TreeItemCollapsibleState.None, change.local, change);
@@ -76,7 +78,8 @@ export class PendingChangesSCM implements vscode.TreeDataProvider<vscode.TreeIte
             folderNode.children.push(fileNode);
         }
 
-        return Array.from(folderNodesMap.values());
+        this.folderNodesArray = Array.from(this.folderNodesMap.values());
+        return this.folderNodesArray;
     } catch (error) {
         throw error;
     }
@@ -102,7 +105,8 @@ class FolderNode extends vscode.TreeItem {
       public readonly label: string,
       public readonly collapsibleState: vscode.TreeItemCollapsibleState,
       public readonly children: vscode.TreeItem[],
-      public readonly folderPath: string
+      public readonly folderPath: string,
+      public readonly pendingChange: TfTypes.PendingChange
   ) {
       super(label, vscode.TreeItemCollapsibleState.Expanded);
       this.iconPath = vscode.ThemeIcon.Folder;
@@ -110,8 +114,9 @@ class FolderNode extends vscode.TreeItem {
 
       this.contextValue = 'checkedOut';
   }
+
   getPath() {
-    return this.folderPath;
+    return this.pendingChange.local;
   }
 }
 
@@ -143,7 +148,7 @@ export class FileNode extends vscode.TreeItem {
     const directoryPart = path.dirname(relativePath);
 
     this.iconPath = vscode.ThemeIcon.File;
-    this.resourceUri = toResourceUri(vscode.Uri.parse('_.'+ path.extname(filePath)), this.pendingChange);    
+    this.resourceUri = this.toResourceUri(vscode.Uri.parse('_.'+ path.extname(filePath)), this.pendingChange);    
     this.description = directoryPart;
     
     if(this.pendingChange.chg == TfStatuses.TfStatus.Delete){
@@ -162,4 +167,12 @@ export class FileNode extends vscode.TreeItem {
   getPath() {
     return this.filePath;
   }
+
+  toResourceUri(uri: vscode.Uri, item : TfTypes.PendingChange ) {
+    return uri.with({
+      scheme: Schemes.FileChange,
+      query: JSON.stringify(item),
+    });
+  }
+  
 }

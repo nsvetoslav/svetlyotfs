@@ -10,7 +10,11 @@ export async function tf(args: Array<string>) {
   }
  
   try {
-    return await spawnSync(tfPath, args).stdout.toString();
+    let task = await spawnSync(tfPath, args);
+    if(task.stderr.toString().length > 0){
+      throw new Error(task.stderr.toString());
+    }
+    return task.stdout.toString();
   } catch (err:any) {
     throw new Error(err.stderr ? err.stderr : err.message);
   }

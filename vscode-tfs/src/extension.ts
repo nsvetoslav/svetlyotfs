@@ -3,24 +3,23 @@ import { Settings } from "./settings/settings";
 import { VscodeActionHandlerFunctions } from './handlers/handlers';
 import { PendingChangesViewDecorationProvider } from "./scm/decorations/viewdecoration";
 import { PendingChangesSCM } from "./scm/view/pendingchanges";
-
-let tfsWorkspacesStatusBarItem: vscode.StatusBarItem;
+import { WorkspacesStatusBarItem } from "./controls/statusbar/workspaces";
 
 export function activate(context: vscode.ExtensionContext): void {
     Settings.getInstance().setWorkspaceInfo();
     registerProviders(context);
     registerHandlers(context);
-    addTFSWorkspaceStatusBaritem(context);
+    addWorkspaceStatusBarItem(context);
 }
 
 function registerProviders(context: vscode.ExtensionContext) {
   Settings.getInstance().setContext(context);
  
   context.subscriptions.push(new PendingChangesViewDecorationProvider());
-  context.subscriptions.push(vscode.window.registerTreeDataProvider(
-    "pendingChanges",
-    PendingChangesSCM.getInstance()
-  ));
+  context.subscriptions.push(vscode.window.createTreeView("pendingChanges", {
+    treeDataProvider: PendingChangesSCM.getInstance(),
+    canSelectMany: true,
+  }));
 
   PendingChangesSCM.getInstance().refresh();
 }
@@ -50,10 +49,7 @@ function registerHandlers(context: vscode.ExtensionContext){
     return await PendingChangesSCM.getInstance().refresh();
   }));
 
-  // // Create files
-  // context.subscriptions.push(vscode.workspace.onWillCreateFiles(async (event) => {
-  // }));
-
+  // Create files
   context.subscriptions.push(vscode.workspace.onDidCreateFiles(async (event) => {
     await VscodeActionHandlerFunctions.createFiles(event.files);
     return await PendingChangesSCM.getInstance().refresh();
@@ -68,60 +64,13 @@ function registerHandlers(context: vscode.ExtensionContext){
   vscode.commands.registerCommand("pendingChanges.compareFiles", async (uri: any) => {
     return await VscodeActionHandlerFunctions.compareFileWithLatest(uri)
   });
-
-  context.subscriptions.push(vscode.commands.registerCommand("pendingChanges.workspace", async () => {
-    showTFSWorkspacesQuickPick();
-  }));
 }
 
-function addTFSWorkspaceStatusBaritem(context: vscode.ExtensionContext) {
-
-  vscode.commands.registerCommand("showQuickPick", () =>{
-    showTFSWorkspacesQuickPick();
-  });
-
-	context.subscriptions.push(vscode.commands.registerCommand('tfs.showWorkspaces', () => {
-    showTFSWorkspacesQuickPick();
-	}));
-
-	tfsWorkspacesStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
-	tfsWorkspacesStatusBarItem.command = 'tfs.showWorkspaces';
-
-  context.subscriptions.push(tfsWorkspacesStatusBarItem);
-	context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(updateTFSWorkspacesStatusBarItem));
-	context.subscriptions.push(vscode.window.onDidChangeTextEditorSelection(updateTFSWorkspacesStatusBarItem));
-	updateTFSWorkspacesStatusBarItem();
-}
-
-async function showTFSWorkspacesQuickPick() {
-  let quickpickOptions : vscode.QuickPickOptions = {
-    placeHolder: "Choose workspace"    
-  } 
-
-  let activeWs = Settings.getInstance().getActiveTfsWorkspace<string>();
-  if(activeWs != undefined && (activeWs as string).length > 0){
-    quickpickOptions.placeHolder = (`Current: ${(activeWs as string)}`);
-    Settings.getInstance().getWorkspaceInfo().workspaces.sort((a: string, b: string ) => {
-      console.log(a,b);
-      const activews = (activeWs as unknown);
-      if(a === (activews as string)){
-        return -1;
-      }
-      return 0;
-    })
-  }
-
-  const selected = await vscode.window.showQuickPick(Settings.getInstance().getWorkspaceInfo().workspaces, quickpickOptions);
-  if(selected){
-    Settings.getInstance().setActiveTfsWorkspace(selected.toString());    
-  }
-}
-
-function updateTFSWorkspacesStatusBarItem(): void {
-  tfsWorkspacesStatusBarItem.text = `[TFS]: Workspaces`;
-  tfsWorkspacesStatusBarItem.tooltip = "Change your TFS workspace";
-  tfsWorkspacesStatusBarItem.show();
-  PendingChangesSCM.getInstance().refresh();
+function addWorkspaceStatusBarItem(context: vscode.ExtensionContext) {
+  context.subscriptions.push(WorkspacesStatusBarItem.getInstance().getStatusBarItem());
+	context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(WorkspacesStatusBarItem.getInstance().update));
+	context.subscriptions.push(vscode.window.onDidChangeTextEditorSelection(WorkspacesStatusBarItem.getInstance().update));
+  WorkspacesStatusBarItem.getInstance().registerTriggerCommand();
 }
 
 export function deactivate(): void {}

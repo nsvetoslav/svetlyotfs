@@ -56,6 +56,6 @@ export class WorkspacesStatusBarItem {
     }
 
     public update() {
-        PendingChangesSCM.getInstance().refresh();
+        // PendingChangesSCM.getInstance().refresh();
     }
 }

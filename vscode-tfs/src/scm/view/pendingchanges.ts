@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { TfStatuses } from '../../tfs/statuses';
-import { TfTypes } from '../../TeamServer/types';
-import { Utilities } from '../../TeamServer/utils';
-import { TeamServer } from '../../TeamServer/teamserver';
+import { TfTypes } from '../../teamserver/types';
+import { Utilities } from '../../teamserver/utils';
+import { TeamServer } from '../../teamserver/teamserver';
 
 export enum Schemes {
 	FileChange = 'filechange',

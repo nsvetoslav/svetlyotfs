@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { Settings } from "./settings/settings";
-import { VscodeActionHandlerFunctions } from './Handlers/handlers';
+import { VscodeActionHandlerFunctions } from './handlers/handlers';
 import { PendingChangesViewDecorationProvider } from "./scm/decorations/viewdecoration";
 import { PendingChangesSCM } from "./scm/view/pendingchanges";
 
@@ -36,11 +36,8 @@ function registerHandlers(context: vscode.ExtensionContext){
   }))
 
   // Rename files
-  context.subscriptions.push(vscode.workspace.onWillRenameFiles(async (event) => {
-    return await event.waitUntil(VscodeActionHandlerFunctions.renameFiles(event.files));
-  }));
-
-  context.subscriptions.push(vscode.workspace.onDidRenameFiles(async () => {
+  context.subscriptions.push(vscode.workspace.onDidRenameFiles(async (event) => {
+    await VscodeActionHandlerFunctions.renameFiles(event.files);
     return await PendingChangesSCM.getInstance().refresh();
   }));
 
@@ -53,12 +50,12 @@ function registerHandlers(context: vscode.ExtensionContext){
     return await PendingChangesSCM.getInstance().refresh();
   }));
 
-  // Create files
-  context.subscriptions.push(vscode.workspace.onWillCreateFiles(async (event) => {
-    return await event.waitUntil(VscodeActionHandlerFunctions.createFiles(event.files));
-  }));
+  // // Create files
+  // context.subscriptions.push(vscode.workspace.onWillCreateFiles(async (event) => {
+  // }));
 
-  context.subscriptions.push(vscode.workspace.onDidCreateFiles(async () => {
+  context.subscriptions.push(vscode.workspace.onDidCreateFiles(async (event) => {
+    await VscodeActionHandlerFunctions.createFiles(event.files);
     return await PendingChangesSCM.getInstance().refresh();
   }));
 

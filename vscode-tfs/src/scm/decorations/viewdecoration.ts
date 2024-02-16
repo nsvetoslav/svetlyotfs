@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { TfStatuses } from '../../tfs/statuses';
-import { TfTypes } from '../../TeamServer/types';
+import { TfTypes } from '../../teamserver/types';
 import { PendingChangesSCM } from '../view/pendingchanges';
 
 export class PendingChangesViewDecorationProvider implements vscode.FileDecorationProvider {

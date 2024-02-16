@@ -1,7 +1,7 @@
 import * as vscode from "vscode"
 import { SvetlyoTfsCache } from "../cache/cache";
-import { TfTypes } from '../TeamServer/types';
-import { TeamServer } from "../TeamServer/teamserver";
+import { TfTypes } from '../teamserver/types';
+import { TeamServer } from "../teamserver/teamserver";
 
 enum SettingNames
 {

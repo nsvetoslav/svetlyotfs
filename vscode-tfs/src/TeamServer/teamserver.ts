@@ -3,12 +3,13 @@ import * as path from 'path'
 import * as fs from 'fs'
 
 import { tf } from "../tfs/tfExe";
-import { Utilities } from './utils';
-import { TfTypes } from './types';
+
 import { FileNode } from "../scm/view/pendingchanges";
+import { Utilities } from "./utils";
+import { TfTypes } from "./types";
 
 enum TeamServerCommands {
-    Add = "Add",
+    Add = "add",
     CheckIn = "checkin",
     CheckOut = "checkout",
     View = "view",
@@ -101,17 +102,7 @@ export class TeamServer {
     }
 
     public async rename(oldUri: vscode.Uri, newUri: vscode.Uri) {
-        let result: Promise<{ stdout: string; stderr: string }> = new Promise<{ stdout: string; stderr: string }>((resolve) => {
-            resolve({ stderr: '', stdout: '' });
-        });
-    
-        try {
-            result = tf([TeamServerCommands.Rename, Utilities.removeLeadingSlash(oldUri), Utilities.removeLeadingSlash(newUri)]);
-            return result;
-        } catch (error: any) {
-            vscode.window.showErrorMessage(`TFS: Renaming ${path.basename(oldUri.fsPath)} to ${path.basename(newUri.fsPath)} in version control failed. Error: ${error.message}.`);
-            return result; // Assuming you want to return the promise even in case of error
-        }
+        return tf([TeamServerCommands.Rename, Utilities.removeLeadingSlash(oldUri), Utilities.removeLastDirectory(Utilities.removeLeadingSlash(newUri))]);
     }
 
     public async status(uri: vscode.Uri) {
@@ -123,7 +114,7 @@ export class TeamServer {
                 TeamServerCommandLineArgs.XmlFormat,
                 `${Utilities.removeLeadingSlash(uri)}`]);
 
-                return await Utilities.tfsStatusXmlToTypedArray(tfTask!.stdout);
+                return await Utilities.tfsStatusXmlToTypedArray(tfTask);
         } catch (error: any) {
             vscode.window.showErrorMessage(`TFS": Getting workspace files status from version control failed. Error ${error.message}}`)
         }
@@ -144,7 +135,7 @@ export class TeamServer {
         let task;
         try {
             task = await tf([TeamServerCommands.Workspaces])
-            const splittedConnectionsOutput = task.stdout.split('\n');
+            const splittedConnectionsOutput = task.split('\n');
             const workspaceInfo: TfTypes.WorkspaceInfo = {
                 collection: '',
                 workspaces: []
@@ -170,7 +161,7 @@ export class TeamServer {
     public async checkIsCheckedOut(uri: vscode.Uri) {
         try {
             const task = await tf([TeamServerCommands.Status, Utilities.removeLeadingSlash(uri)]);
-            if (task.stdout != "There are no pending changes.\r\n") {
+            if (task != 'There are no pending changes.\r\n') {
                 return true;
             }
             return false;

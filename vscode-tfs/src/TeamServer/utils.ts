@@ -2,12 +2,19 @@ import * as vscode from 'vscode'
 import * as os from 'os'
 import * as path from 'path'
 import * as xml2js from 'xml2js';
-import { TfTypes } from './types';
 import { FileNode } from '../scm/view/pendingchanges';
+import { TfTypes } from './types';
 
 export class Utilities {
     static removeLeadingSlash(uri: vscode.Uri) {
         return uri.path.replace(/^\//, '');
+    }
+
+    static removeLastDirectory(uri: string): string {
+        const parts = uri.split('/'); 
+        parts.pop(); 
+        const newUriString = parts.join('/');
+        return newUriString; 
     }
 
     static getGlobalStoragePath() {

@@ -1,26 +1,21 @@
 import * as vscode from 'vscode'
-import { TeamServer } from '../TeamServer/teamserver';
+import { TeamServer } from '../teamserver/teamserver';
 import { FileNode, PendingChangesSCM } from '../scm/view/pendingchanges';
 import * as path from 'path';
 
 export namespace VscodeActionHandlerFunctions {
-    export async function renameFiles(files: ReadonlyArray< {
-        /**
-         * The old uri of a file.
-         */
+    export async function renameFiles(files: ReadonlyArray<{
         readonly oldUri: vscode.Uri;
-        /**
-         * The new uri of a file.
-         */
         readonly newUri: vscode.Uri;
     }>) {
         for (const file of files) {
             try {
                 await TeamServer.getInstance().rename(file.oldUri, file.newUri);
-                await vscode.workspace.fs.copy(file.newUri, file.oldUri);
-                await vscode.workspace.fs.delete(file.newUri, {useTrash: true});
+                // await vscode.workspace.fs.copy(file.newUri, file.oldUri);
+                // await vscode.workspace.fs.delete(file.newUri, { useTrash: true });
                 vscode.window.showInformationMessage(`TFS: ${path.basename(file.oldUri.fsPath)} is successfully renamed in version control to ${path.basename(file.newUri.fsPath)}.`);
-            } catch (error) {
+            } catch (error:any ) {
+                vscode.window.showErrorMessage(`TFS: Renaming ${path.basename(file.oldUri.fsPath)} to ${path.basename(file.newUri.fsPath)} in version control failed. Error: ${error.message}.`);
             }
         }
     }

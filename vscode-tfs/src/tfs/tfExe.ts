@@ -1,10 +1,8 @@
 import * as vscode from "vscode"
-import { promisify } from "util"
-import { execFile } from "child_process"
+import { spawnSync } from "child_process"
 
-const pExecFile = promisify(execFile)
 
-export async function tf(args: Array<string>): Promise<{ stdout: string; stderr: string }> {
+export async function tf(args: Array<string>) {
   const tfPath: string | undefined = vscode.workspace.getConfiguration("tfs").get("location")
 
   if (!tfPath) {
@@ -12,9 +10,10 @@ export async function tf(args: Array<string>): Promise<{ stdout: string; stderr:
   }
  
   try {
-    return pExecFile(tfPath, args)
+    return await spawnSync(tfPath, args).stdout.toString();
   } catch (err:any) {
-    throw new Error(err.stderr ? err.stderr : err.message)
+    throw new Error(err.stderr ? err.stderr : err.message);
   }
 }
+
 

@@ -110,6 +110,9 @@ class FolderNode extends vscode.TreeItem {
 
       this.contextValue = 'checkedOut';
   }
+  getPath() {
+    return this.folderPath;
+  }
 }
 
 function strikethrough(text: string): string {
@@ -132,6 +135,7 @@ export class FileNode extends vscode.TreeItem {
       arguments: [vscode.Uri.file(this.filePath)],
   };
     
+ 
     if(Utilities.getWorkspaceDirectory() === undefined){
       return;
     } 
@@ -153,5 +157,9 @@ export class FileNode extends vscode.TreeItem {
     
     this.contextValue = 'checkedOut';
     this.label = this.label;
+  }
+
+  getPath() {
+    return this.filePath;
   }
 }

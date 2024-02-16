@@ -102,7 +102,8 @@ export class TeamServer {
     }
 
     public async rename(oldUri: vscode.Uri, newUri: vscode.Uri) {
-        return tf([TeamServerCommands.Rename, Utilities.removeLeadingSlash(oldUri), Utilities.removeLastDirectory(Utilities.removeLeadingSlash(newUri))]);
+        await this.add(newUri);
+        await this.delete(oldUri);
     }
 
     public async status(uri: vscode.Uri) {
@@ -122,9 +123,9 @@ export class TeamServer {
         return undefined;
     }
 
-    public async undo(uri: FileNode) {
+    public async undo(uri: FileNode | FileNode) {
         try{
-            await tf([TeamServerCommands.Undo, uri.filePath, TeamServerCommandLineArgs.Recursive]);
+            await tf([TeamServerCommands.Undo, uri.getPath(), TeamServerCommandLineArgs.Recursive]);
             vscode.window.showInformationMessage(`TFS: Undoing changes in version control for ${path.basename(uri.filePath)} completed successfully.`);
         } catch(error: any) {
             vscode.window.showErrorMessage(`TFS: Undoing changes for ${path.basename(uri.filePath)} failed. Error: ${error.message}.`);

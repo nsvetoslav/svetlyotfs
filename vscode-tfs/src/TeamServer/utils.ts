@@ -7,7 +7,7 @@ import { TfTypes } from './types';
 
 export class Utilities {
     static removeLeadingSlash(uri: vscode.Uri) {
-        return uri.path.replace(/^\//, '');
+        return uri.fsPath.replace(/^\//, '');
     }
 
     static replaceForwardSlashes(input: string): string {

@@ -1,6 +1,6 @@
 import * as vscode from "vscode"
 import { spawnSync } from "child_process"
-
+import * as iconv from 'iconv-lite';
 
 export async function tf(args: Array<string>) {
   const tfPath: string | undefined = vscode.workspace.getConfiguration("tfs").get("location")
@@ -10,11 +10,12 @@ export async function tf(args: Array<string>) {
   }
  
   try {
-    let task = await spawnSync(tfPath, args);
+    let task = await spawnSync(tfPath, args, {encoding: 'buffer'});
     if(task.stderr.toString().length > 0){
       throw new Error(task.stderr.toString());
     }
-    return task.stdout.toString();
+    const outputString = iconv.decode(task.stdout, 'win1251');
+    return outputString;
   } catch (err:any) {
     throw new Error(err.stderr ? err.stderr : err.message);
   }

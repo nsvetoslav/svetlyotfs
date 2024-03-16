@@ -39,6 +39,10 @@ export namespace VscodeActionHandlerFunctions {
         return TeamServer.getInstance().undo(file);
     }
 
+    export async function compareFilesFromHistory(uri: vscode.Uri, changeset1: string, changedBy1: string, changeset2: string, changedBy2: string,) {
+        return TeamServer.getInstance().compareFilesFromHistory(uri, changeset1, changedBy1, changeset2, changedBy2);
+    }
+
     export async function compareFileWithLatest(file: FileNode) {
         return TeamServer.getInstance().compare(file);
     }
@@ -47,5 +51,9 @@ export namespace VscodeActionHandlerFunctions {
         if(await TeamServer.getInstance().checkIsCheckedOut(file) == false){
             return TeamServer.getInstance().checkOut(file);
         }
+    }
+
+    export async function onOpenDocument(file: vscode.Uri) {
+        return await TeamServer.getInstance().fileHistory(file);
     }
 }

@@ -10,6 +10,10 @@ export class Utilities {
         return uri.fsPath.replace(/^\//, '');
     }
 
+    static getRelativePath(uri: vscode.Uri) {
+        return '$' + uri.path;
+    }
+
     static replaceForwardSlashes(input: string): string {
         return input.replace(/\//g, '\\');
     }
@@ -24,6 +28,10 @@ export class Utilities {
     static getGlobalStoragePath() {
         return os.homedir();
     }
+
+    static generateTemporaryFileNameFromDate(datetime: string) {
+        return path.join(Utilities.getGlobalStoragePath(), datetime);
+    } 
 
     static generateTemporaryFileNameFromUri(uri: FileNode) {
         return path.join(Utilities.getGlobalStoragePath(), path.basename(uri.filePath));
@@ -67,4 +75,48 @@ export class Utilities {
     
         return pendingChanges;
     }
+
+    static async parseTfHistoryOutput(tfOutput: string): Promise<TfTypes.Changeset[]> {
+        const changesetPattern = /^Changeset:\s+(\d+)/;
+        const userPattern = /^User:\s+(.+)/;
+        const datePattern = /^Date:\s+(.+)/;
+        const commentPattern = /^Comment:\s*(.+)/;
+        const itemPattern = /^  edit\s+\$(.+)/;
+    
+        let changesets: TfTypes.Changeset[] = [];
+        let currentChangeset: Partial<TfTypes.Changeset> = {};
+        let lines = tfOutput.split('\n');
+    
+        for (let line of lines) {
+            if (changesetPattern.test(line)) {
+                if (currentChangeset.changesetId) {
+                    changesets.push(currentChangeset as TfTypes.Changeset);
+                    currentChangeset = {};
+                }
+                let match = line.match(changesetPattern);
+                currentChangeset.changesetId = match ? parseInt(match[1], 10) : 0;
+                currentChangeset.items = [];
+            } else if (userPattern.test(line)) {
+                let match = line.match(userPattern);
+                currentChangeset.user = match ? match[1].trim() : '';
+            } else if (datePattern.test(line)) {
+                let match = line.match(datePattern);
+                currentChangeset.date = match ? match[1].trim() : '';
+            } else if (commentPattern.test(line)) {
+                let match = line.match(commentPattern);
+                currentChangeset.comment = match ? match[1].trim() : '';
+            } else if (itemPattern.test(line)) {
+                let match = line.match(itemPattern);
+                if (match) currentChangeset.items?.push(match[1].trim());
+            }
+        }
+    
+        if (currentChangeset.changesetId) {
+            changesets.push(currentChangeset as TfTypes.Changeset);
+        }
+    
+        return changesets;
+    }
+
+    
 }

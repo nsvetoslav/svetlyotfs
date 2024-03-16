@@ -4,6 +4,12 @@ import { PendingChangesViewDecorationProvider } from "./scm/decorations/viewdeco
 import { PendingChangesSCM } from "./scm/view/pendingchanges";
 import { WorkspacesStatusBarItem } from "./controls/statusbar/workspaces";
 import { VscodeActionHandlerFunctions } from "./Handlers/handlers";
+import { FileHistorySCM } from "./scm/view/fileHistory";
+import { TfTypes } from './TeamServer/types';
+import { Utilities } from "./teamserver/utils";
+import path from "path";
+
+let treeview: any;
 
 export function activate(context: vscode.ExtensionContext): void {
     Settings.getInstance().setWorkspaceInfo();
@@ -21,6 +27,11 @@ function registerProviders(context: vscode.ExtensionContext) {
     canSelectMany: true,
   }));
 
+  context.subscriptions.push( treeview = vscode.window.createTreeView("currentFileHistory", {
+    treeDataProvider: FileHistorySCM.getInstance(),
+    canSelectMany: true,
+  }));
+  
   PendingChangesSCM.getInstance().refresh();
 }
 
@@ -60,6 +71,43 @@ function registerHandlers(context: vscode.ExtensionContext){
     await VscodeActionHandlerFunctions.undo(uri);
     return await PendingChangesSCM.getInstance().refresh();
   }));
+
+  context.subscriptions.push(vscode.commands.registerCommand('fileHistory.comapreWithAnother', async () =>{
+    let changesets: TfTypes.Changeset[] = [];
+
+    treeview.selection.forEach((item: { data: any; }) => {
+      const queryObject = JSON.parse((item as any).resourceUri.query as any)
+      console.log(queryObject);
+
+      changesets.push(queryObject as TfTypes.Changeset);
+    });
+
+    if(changesets.length != 2 || changesets === undefined) {
+      return;
+    }
+
+    await VscodeActionHandlerFunctions.compareFilesFromHistory(vscode.Uri.parse(changesets[0].items[0]),
+      changesets[0].changesetId.toString(),
+      changesets[0].user as string,
+      changesets[1].changesetId.toString(),
+      changesets[1].user as string,
+      );
+
+    console.log(changesets);
+  }));
+
+  context.subscriptions.push(vscode.workspace.onDidOpenTextDocument(async (event) => {
+    const workspaceDirectory = Utilities.getWorkspaceDirectory();
+    if(workspaceDirectory === '')
+      return;
+
+    if(path.basename(workspaceDirectory) != vscode.workspace.getWorkspaceFolder(event.uri)?.name) {
+      return;
+    }
+
+    const fileHistory = await VscodeActionHandlerFunctions.onOpenDocument(event.uri);
+    FileHistorySCM.getInstance().refresh(fileHistory as any);
+  }))
   
   vscode.commands.registerCommand("pendingChanges.compareFiles", async (uri: any) => {
     return await VscodeActionHandlerFunctions.compareFileWithLatest(uri)

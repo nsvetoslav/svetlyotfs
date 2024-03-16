@@ -1,6 +1,6 @@
 {
     "name": "svetlyo-tfs",
-    "version": "2.0.0",
+    "version": "2.1.1",
     "description": "TFS Visual Studio Code integration.",
     "license": "SEE LICENSE IN LICENSE",
     "main": "./out/extension",
@@ -40,18 +40,11 @@
         "vscode": "^1.86.0"
     },
     "contributes": {
-        "viewsWelcome": [
-            {
-              "view": "tfsData",
-              "contents": "asdasdasd",
-              "when": "workbenchState != empty"
-            }
-          ],
         "viewsContainers": {
             "activitybar": [
                 {
                     "id": "pending-changes",
-                    "title": "Pending Changes",
+                    "title": "TFServer (TFS)",
                     "icon": "res/tfs.png"
                 }
             ]
@@ -60,10 +53,18 @@
             "pending-changes": [
                 {
                     "id": "pendingChanges",
-                    "contents": "Empty content",
-                    "name": "Pending Changes",
+                    "contents": "",
+                    "name": "Staged Changes",
                     "icon": "res/tfs.png",
                     "contextualTitle": "Pending Changes",
+                    "type": "tree"
+                },
+                {
+                    "id": "currentFileHistory",
+                    "contents": "",
+                    "name": "Current file changes",
+                    "icon": "res/tfs.png",
+                    "contextualTitle": "History",
                     "type": "tree"
                 }
             ]
@@ -88,6 +89,11 @@
             {
                 "command": "pendingChanges.undo",
                 "title": "Undo changes",
+                "enablement": "true"
+            },
+            {
+                "command": "fileHistory.comapreWithAnother",
+                "title": "Compare",
                 "enablement": "true"
             },
             {
@@ -151,6 +157,12 @@
                 {
                     "command": "pendingChanges.undo",
                     "when": "view == pendingChanges",
+                    "group": "navigation",
+                    "visible": true
+                },
+                {
+                    "command": "fileHistory.comapreWithAnother",
+                    "when": "view == currentFileHistory",
                     "group": "navigation",
                     "visible": true
                 }

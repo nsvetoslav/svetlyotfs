@@ -46,6 +46,14 @@ export namespace TfTypes{
         SourceRename = "SourceRename",
         Undelete = "Undelete",
     }
+    
+    export interface Changeset {
+        changesetId: number;
+        user: string;
+        date: string;
+        comment: string;
+        items: string[];
+    }
 
     export function getDescriptionText(state: TfStatus){
     switch(state){
@@ -79,4 +87,5 @@ export namespace TfTypes{
             return 'The file is undeleted';
     }
     }
+
 }

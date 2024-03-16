@@ -20,17 +20,20 @@ enum TeamServerCommands {
     Undo = "undo",
     Status = "status",
     Workspaces = "workspaces",
-    Reconcile = "reconcile"
+    Reconcile = "reconcile",
+    History = "history",
 }
 
 enum TeamServerCommandLineArgs {
     Recursive = "/recursive",
     OutputDirectory = "/output",
     XmlFormat = "/format:xml",
+    DetailedFormat = "/format:detailed",
     Workspace = "/workspace:",
     NoPrompt = "/noprompt",
     Adds = "/adds",
-    Promote = "/promote"
+    Promote = "/promote",
+    Version = "/version:C"
 }
 
 export class TeamServer {
@@ -84,6 +87,31 @@ export class TeamServer {
                 vscode.window.showErrorMessage(`TFS: Checking out ${path.basename(uri.fsPath)} in version control failed. Error: ${error.message}.`);
             }
         } 
+    }
+
+    public async compareFilesFromHistory(uri: vscode.Uri, changeset1: string, changedBy1: string, changeset2: string, changedBy2: string) {
+        const firstChangesetFileTemporaryPath = Utilities.generateTemporaryFileNameFromDate(changedBy1 + '-' + changeset1);
+        const secondChangesetFileTemporaryPath = Utilities.generateTemporaryFileNameFromDate(changedBy2 + '-' + changeset2);
+
+        try {
+            await tf([TeamServerCommands.View, Utilities.getRelativePath(uri),
+                `${TeamServerCommandLineArgs.Version}${changeset1}`, 
+                `${TeamServerCommandLineArgs.OutputDirectory}:${firstChangesetFileTemporaryPath}`])
+
+            await tf([TeamServerCommands.View, Utilities.getRelativePath(uri), 
+                `${TeamServerCommandLineArgs.Version}${changeset2}`, 
+                `${TeamServerCommandLineArgs.OutputDirectory}:${secondChangesetFileTemporaryPath}`])
+
+            const firstChangesetFileTemporaryDocument = await vscode.workspace.openTextDocument(firstChangesetFileTemporaryPath);
+            const secondChangesetFileTemporaryDocument = await vscode.workspace.openTextDocument(secondChangesetFileTemporaryPath);
+            
+            vscode.commands.executeCommand("vscode.diff", secondChangesetFileTemporaryDocument.uri, firstChangesetFileTemporaryDocument.uri).then(() => {
+                fs.unlinkSync(firstChangesetFileTemporaryPath);
+                fs.unlinkSync(secondChangesetFileTemporaryPath);
+            });
+        } catch (error: any) {
+            vscode.window.showErrorMessage(`TFS: Comparing ${path.basename(firstChangesetFileTemporaryPath)} with ${path.basename(secondChangesetFileTemporaryPath)} failed. Error: ${error.message}.`);
+        }
     }
 
     public async compare(localUri: FileNode) {
@@ -151,6 +179,21 @@ export class TeamServer {
         } catch(error: any) {
             vscode.window.showErrorMessage(`TFS: Undoing changes for ${path.basename(uri.filePath)} failed. Error: ${error.message}.`);
         } 
+    }
+
+    public async fileHistory(uri : vscode.Uri) {
+        let fileHistory = '';
+        try {
+            fileHistory = await tf([TeamServerCommands.History, 
+                Utilities.removeLeadingSlash(uri), 
+                TeamServerCommandLineArgs.Recursive, 
+                TeamServerCommandLineArgs.DetailedFormat]);
+
+        } catch(error: any) {
+            // No errror messages for extra functionalities ^^, if the execution doesn't succeed that means TFS is garbage.
+        }
+
+        return await Utilities.parseTfHistoryOutput(fileHistory);
     }
 
     public async getWorkspaces() {

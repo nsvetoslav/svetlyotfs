@@ -32,7 +32,7 @@ export class Utilities {
     static getWorkspaceDirectory() {
         const workspaceFolders = vscode.workspace.workspaceFolders;
         if (workspaceFolders && workspaceFolders.length > 0) {
-            return workspaceFolders[0].uri.fsPath;
+            return workspaceFolders[0].uri.path;
         }
         return '';
     }

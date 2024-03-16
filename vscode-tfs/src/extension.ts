@@ -1,9 +1,9 @@
 import * as vscode from "vscode";
 import { Settings } from "./settings/settings";
-import { VscodeActionHandlerFunctions } from './handlers/handlers';
 import { PendingChangesViewDecorationProvider } from "./scm/decorations/viewdecoration";
 import { PendingChangesSCM } from "./scm/view/pendingchanges";
 import { WorkspacesStatusBarItem } from "./controls/statusbar/workspaces";
+import { VscodeActionHandlerFunctions } from "./Handlers/handlers";
 
 export function activate(context: vscode.ExtensionContext): void {
     Settings.getInstance().setWorkspaceInfo();

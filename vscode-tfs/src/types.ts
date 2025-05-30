@@ -1,4 +1,4 @@
-import { TfStatuses } from "../tfs/statuses"
+import { TfStatuses } from "./statuses"
 
 export namespace TfTypes{
     export type TfWorkfold = {

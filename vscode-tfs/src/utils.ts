@@ -2,8 +2,8 @@ import * as vscode from 'vscode'
 import * as os from 'os'
 import * as path from 'path'
 import * as xml2js from 'xml2js';
-import { FileNode } from '../scm/view/pendingchanges';
 import { TfTypes } from './types';
+import { FileNode } from './pendingchanges';
 
 export class Utilities {
     static removeLeadingSlash(uri: vscode.Uri) {

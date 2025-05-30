@@ -1,6 +1,6 @@
 import * as vscode from 'vscode'
-import { PendingChangesSCM } from '../../scm/view/pendingchanges';
-import { Settings } from '../../settings/settings';
+import { PendingChangesSCM } from './pendingchanges';
+import { Settings } from './settings';
 
 export class WorkspacesStatusBarItem {
     private static instance: WorkspacesStatusBarItem;

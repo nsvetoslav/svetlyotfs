@@ -1,7 +1,7 @@
 import * as vscode from "vscode"
-import { SvetlyoTfsCache } from "../cache/cache";
-import { TfTypes } from '../teamserver/types';
-import { TeamServer } from "../teamserver/teamserver";
+import { LocalCache } from "./cache";
+import { TeamServer } from "./teamserver";
+import { TfTypes } from "./types";
 
 enum SettingNames
 {
@@ -11,7 +11,7 @@ enum SettingNames
 export class Settings {
     private static _instance: Settings;
     private static _context: vscode.ExtensionContext;
-    private static _cache : SvetlyoTfsCache;
+    private static _cache : LocalCache;
     private static _workspaceInfo : TfTypes.WorkspaceInfo;
 
     private constructor() { }
@@ -26,7 +26,7 @@ export class Settings {
 
     public setContext(context: vscode.ExtensionContext){
         Settings._context = context;
-        Settings._cache = new SvetlyoTfsCache(Settings._context);
+        Settings._cache = new LocalCache(Settings._context);
     }
 
     public getActiveTfsWorkspace<T>(){

@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
-import { TfTypes } from '../../teamserver/types';
+import { TfTypes } from './types';  
 import { Schemes } from './pendingchanges';
-import path from 'path';
 
 export class FileHistorySCM implements vscode.TreeDataProvider<vscode.TreeItem> {
     private _onDidChangeTreeData: vscode.EventEmitter<vscode.TreeItem | undefined | void> = new vscode.EventEmitter<vscode.TreeItem | undefined | void>();
@@ -25,10 +24,8 @@ export class FileHistorySCM implements vscode.TreeDataProvider<vscode.TreeItem> 
 
     getChildren(element?: vscode.TreeItem): Thenable<vscode.TreeItem[]> {
         if (element) {
-            // Since we're making them not expandable, return no children.
             return Promise.resolve([]);
         } else {
-            // Return the root level items (changesets) with label and description.
             return Promise.resolve(this.changesets.map(cs => {
                 const label = `Changeset ${cs.changesetId}`;
                 const item = new vscode.TreeItem(label, vscode.TreeItemCollapsibleState.None);

@@ -1,6 +1,6 @@
 {
-    "name": "svetlyo-tfs",
-    "version": "2.1.1",
+    "name": "TFS",
+    "version": "3.0.5",
     "description": "TFS Visual Studio Code integration.",
     "license": "SEE LICENSE IN LICENSE",
     "main": "./out/extension",
@@ -221,7 +221,7 @@
     },
     "readmeFilename": "README.md",
     "displayName": "TFServer (TFS)",
-    "icon": "res/tfs.png",
+    "icon": "res/image.png",
     "galleryBanner": {
         "color": "#912a2a",
         "theme": "dark"

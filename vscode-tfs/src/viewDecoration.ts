@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
-import { TfStatuses } from '../../tfs/statuses';
-import { TfTypes } from '../../teamserver/types';
-import { PendingChangesSCM } from '../view/pendingchanges';
+import { PendingChangesSCM } from './pendingchanges';
+import { TfStatuses } from './statuses';
+import { TfTypes } from './types';
 
 export class PendingChangesViewDecorationProvider implements vscode.FileDecorationProvider {
 	private _disposables: vscode.Disposable[] = [];
@@ -59,6 +59,7 @@ fromFileChangeNodeUri(uri: vscode.Uri): TfTypes.PendingChange | undefined {
 		return new vscode.ThemeColor(color);
 	}
 
+  // Тази функция я описвам просто с ":D"
   remoteReposColors(status: TfStatuses.TfStatus): string  {
 		switch (status) {
       case TfStatuses.TfStatus.AddEncoding:

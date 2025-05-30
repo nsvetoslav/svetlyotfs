@@ -1,13 +1,12 @@
 import * as vscode from "vscode"
 import * as path from 'path'
 import * as fs from 'fs'
-
-import { tf } from "../tfs/tfExe";
-
-import { FileNode } from "../scm/view/pendingchanges";
-import { Utilities } from "./utils";
+import { FileNode } from "./pendingchanges";
+import { Settings } from "./settings";
+import { tf } from "./tfExe";
 import { TfTypes } from "./types";
-import { Settings } from "../settings/settings";
+import { Utilities } from "./utils";
+
 
 enum TeamServerCommands {
     Add = "add",
@@ -62,7 +61,7 @@ export class TeamServer {
             // await tf([TeamServerCommands.Reconcile, TeamServerCommandLineArgs.Promote, TeamServerCommandLineArgs.Adds, TeamServerCommandLineArgs.NoPrompt]);
             vscode.window.showInformationMessage(`TFS: ${path.basename(uri.fsPath)} succesfully added in version control.`);
         } catch(error: any) {
-            vscode.window.showErrorMessage(`TFS: Adding ${path.basename(uri.fsPath)} in version control failed. Error: ${error.message}.`);
+            // vscode.window.showErrorMessage(`TFS: Adding ${path.basename(uri.fsPath)} in version control failed. Error: ${error.message}.`);
         } 
     }
 
@@ -71,7 +70,7 @@ export class TeamServer {
             await tf([TeamServerCommands.CheckIn, this.getActiveWorkspaceAsCommandLineArgument(), Utilities.removeLeadingSlash(uri), TeamServerCommandLineArgs.Recursive])
             vscode.window.showInformationMessage(`TFS: ${path.basename(uri.fsPath)} succesfully checked in version control.`);
         } catch (error: any) {
-            vscode.window.showErrorMessage(`TFS: Checking ${path.basename(uri.fsPath)} in version control failed. Error: ${error.message}.`);
+            // vscode.window.showErrorMessage(`TFS: Checking ${path.basename(uri.fsPath)} in version control failed. Error: ${error.message}.`);
         } 
     }
 
@@ -84,7 +83,7 @@ export class TeamServer {
                 vscode.window.showInformationMessage(`TFS: ${path.basename(uri.fsPath)} succesfully checked out in version control.`);
             } else {
                 // For other errors, show the error message
-                vscode.window.showErrorMessage(`TFS: Checking out ${path.basename(uri.fsPath)} in version control failed. Error: ${error.message}.`);
+                // vscode.window.showErrorMessage(`TFS: Checking out ${path.basename(uri.fsPath)} in version control failed. Error: ${error.message}.`);
             }
         } 
     }
@@ -110,7 +109,7 @@ export class TeamServer {
                 fs.unlinkSync(secondChangesetFileTemporaryPath);
             });
         } catch (error: any) {
-            vscode.window.showErrorMessage(`TFS: Comparing ${path.basename(firstChangesetFileTemporaryPath)} with ${path.basename(secondChangesetFileTemporaryPath)} failed. Error: ${error.message}.`);
+            // vscode.window.showErrorMessage(`TFS: Comparing ${path.basename(firstChangesetFileTemporaryPath)} with ${path.basename(secondChangesetFileTemporaryPath)} failed. Error: ${error.message}.`);
         }
     }
 
@@ -127,7 +126,7 @@ export class TeamServer {
                     fs.unlinkSync(temporaryFilePath);
                 });
             } catch (error: any) {
-            vscode.window.showErrorMessage(`TFS: Comparing ${path.basename(localUri.filePath)} with latest failed. Error: ${error.message}.`);
+            // vscode.window.showErrorMessage(`TFS: Comparing ${path.basename(localUri.filePath)} with latest failed. Error: ${error.message}.`);
         }
     }
 
@@ -136,7 +135,7 @@ export class TeamServer {
             await tf([TeamServerCommands.Delete, Utilities.removeLeadingSlash(uri), TeamServerCommandLineArgs.Recursive]);
             vscode.window.showInformationMessage(`TFS: ${path.basename(uri.fsPath)} succesfully deleted from version control.`);
         } catch(error: any) {
-            vscode.window.showErrorMessage(`TFS: Deleting ${path.basename(uri.fsPath)} failed. Error: ${error.message}.`);
+            // vscode.window.showErrorMessage(`TFS: Deleting ${path.basename(uri.fsPath)} failed. Error: ${error.message}.`);
         } 
     }
 
@@ -145,7 +144,7 @@ export class TeamServer {
             await tf([TeamServerCommands.Get, this.getActiveWorkspaceAsCommandLineArgument(), Utilities.removeLeadingSlash(uri), TeamServerCommandLineArgs.Recursive]);
             vscode.window.showInformationMessage(`TFS: ${path.basename(uri.fsPath)} is now latest.`);
         } catch(error: any) {
-            vscode.window.showErrorMessage(`TFS: Getting ${path.basename(uri.fsPath)} failed. Error: ${error.message}.`);
+            // vscode.window.showErrorMessage(`TFS: Getting ${path.basename(uri.fsPath)} failed. Error: ${error.message}.`);
         } 
     }
 
@@ -166,7 +165,7 @@ export class TeamServer {
 
                 return await Utilities.tfsStatusXmlToTypedArray(tfTask);
         } catch (error: any) {
-            vscode.window.showErrorMessage(`TFS": Getting workspace files status from version control failed. Error ${error.message}}`)
+            // vscode.window.showErrorMessage(`TFS": Getting workspace files status from version control failed. Error ${error.message}}`)
         }
 
         return undefined;
@@ -217,7 +216,7 @@ export class TeamServer {
             }
             return workspaceInfo;
         } catch (error: any) {
-            vscode.window.showErrorMessage(`TFS: Retrieving workspaces from version control failed: Error ${error.message}`)
+            // vscode.window.showErrorMessage(`TFS: Retrieving workspaces from version control failed: Error ${error.message}`)
         } 
 
         return undefined;

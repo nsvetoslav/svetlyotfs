@@ -1,0 +1,2 @@
+npm run compile
+vsce package --nokeyboard_arrow_down

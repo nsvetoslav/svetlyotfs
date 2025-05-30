@@ -1,6 +1,6 @@
 import * as vscode from 'vscode'
-import { TeamServer } from '../teamserver/teamserver';
-import { FileNode, PendingChangesSCM } from '../scm/view/pendingchanges';
+import { TeamServer } from './teamserver';
+import { FileNode, PendingChangesSCM } from './pendingchanges';
 import * as path from 'path';
 
 export namespace VscodeActionHandlerFunctions {

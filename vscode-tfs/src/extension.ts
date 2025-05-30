@@ -1,13 +1,13 @@
 import * as vscode from "vscode";
-import { Settings } from "./settings/settings";
-import { PendingChangesViewDecorationProvider } from "./scm/decorations/viewdecoration";
-import { PendingChangesSCM } from "./scm/view/pendingchanges";
-import { WorkspacesStatusBarItem } from "./controls/statusbar/workspaces";
-import { VscodeActionHandlerFunctions } from "./Handlers/handlers";
-import { FileHistorySCM } from "./scm/view/fileHistory";
-import { TfTypes } from './TeamServer/types';
-import { Utilities } from "./teamserver/utils";
 import path from "path";
+import { VscodeActionHandlerFunctions } from "./handlers";
+import { PendingChangesSCM } from "./pendingchanges";
+import { WorkspacesStatusBarItem } from "./workspaces";
+import { TfTypes } from "./types";
+import { Utilities } from "./utils";
+import { FileHistorySCM } from "./fileHistorySCM";
+import { Settings } from "./settings";
+import { PendingChangesViewDecorationProvider } from "./viewDecoration";
 
 let treeview: any;
 
@@ -96,16 +96,19 @@ function registerHandlers(context: vscode.ExtensionContext){
     console.log(changesets);
   }));
 
-  context.subscriptions.push(vscode.workspace.onDidOpenTextDocument(async (event) => {
+  context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(async (event) => {
     const workspaceDirectory = Utilities.getWorkspaceDirectory();
     if(workspaceDirectory === '')
       return;
 
-    if(path.basename(workspaceDirectory) != vscode.workspace.getWorkspaceFolder(event.uri)?.name) {
+    if(!event)
+      return;
+
+    if(path.basename(workspaceDirectory) != vscode.workspace.getWorkspaceFolder(event.document.uri)?.name) {
       return;
     }
 
-    const fileHistory = await VscodeActionHandlerFunctions.onOpenDocument(event.uri);
+    const fileHistory = await VscodeActionHandlerFunctions.onOpenDocument(event.document.uri);
     FileHistorySCM.getInstance().refresh(fileHistory as any);
   }))
   

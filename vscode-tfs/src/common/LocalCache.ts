@@ -1,6 +1,6 @@
 import * as vscode from "vscode"
 
-export class SvetlyoTfsCache {
+export class LocalCache {
     constructor(private context: vscode.ExtensionContext){ }
 
     private getWorkspaceState(){
@@ -20,6 +20,6 @@ export class SvetlyoTfsCache {
     }
 
     getAllKeys(){
-        this.getWorkspaceState().keys();
+        return this.getWorkspaceState().keys();
     }
 }

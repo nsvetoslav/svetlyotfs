@@ -1,6 +1,6 @@
 import * as vscode from 'vscode'
-import { PendingChangesSCM } from '../../scm/view/pendingchanges';
-import { Settings } from '../../settings/settings';
+import { PendingChangesTreeView } from './PendingChangesTreeView';
+import { Settings } from '../common/Settings';
 
 export class WorkspacesStatusBarItem {
     private static instance: WorkspacesStatusBarItem;
@@ -47,7 +47,7 @@ export class WorkspacesStatusBarItem {
         const selectedWorkspace = await vscode.window.showQuickPick(Settings.getInstance().getWorkspaceInfo().workspaces, quickpickOptions);
         if(selectedWorkspace){
             Settings.getInstance().setActiveTfsWorkspace(selectedWorkspace.toString());    
-            PendingChangesSCM.getInstance().refresh();
+            PendingChangesTreeView.getInstance().refresh();
         }
     }
 

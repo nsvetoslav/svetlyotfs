@@ -1,21 +1,21 @@
 import * as vscode from 'vscode';
-import { TfTypes } from './types';  
-import { Schemes } from './pendingchanges';
+import { Changeset, PendingChange } from '../TFS/Types';  
+import { Schemes } from './PendingChangesTreeView';
 
-export class FileHistorySCM implements vscode.TreeDataProvider<vscode.TreeItem> {
+export class FileHistoryTreeView implements vscode.TreeDataProvider<vscode.TreeItem> {
     private _onDidChangeTreeData: vscode.EventEmitter<vscode.TreeItem | undefined | void> = new vscode.EventEmitter<vscode.TreeItem | undefined | void>();
     readonly onDidChangeTreeData: vscode.Event<vscode.TreeItem | undefined | void> = this._onDidChangeTreeData.event;
 
-    private static instance: FileHistorySCM;
-    private changesets: TfTypes.Changeset[] = []; 
+    private static instance: FileHistoryTreeView;
+    private changesets: Changeset[] = []; 
     private constructor() { }
   
-    public static getInstance(): FileHistorySCM {
-      if (!FileHistorySCM.instance) {
-        FileHistorySCM.instance = new FileHistorySCM();
+    public static getInstance(): FileHistoryTreeView {
+      if (!FileHistoryTreeView.instance) {
+        FileHistoryTreeView.instance = new FileHistoryTreeView();
       }
   
-      return FileHistorySCM.instance;
+      return FileHistoryTreeView.instance;
     }
 
     getTreeItem(element: vscode.TreeItem): vscode.TreeItem {
@@ -38,14 +38,14 @@ export class FileHistorySCM implements vscode.TreeDataProvider<vscode.TreeItem> 
         }
     }
 
-    toResourceUri(uri: vscode.Uri, item : TfTypes.PendingChange ) {
+    toResourceUri(uri: vscode.Uri, item : PendingChange ) {
         return uri.with({
           scheme: Schemes.FileChange,
           query: JSON.stringify(item),
         });
       }
       
-    public refresh(changesets: TfTypes.Changeset[]): void {
+    public refresh(changesets: Changeset[]): void {
         this.changesets = changesets;
         this._onDidChangeTreeData.fire();
     }

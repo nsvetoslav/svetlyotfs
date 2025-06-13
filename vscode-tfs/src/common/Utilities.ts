@@ -2,8 +2,8 @@ import * as vscode from 'vscode'
 import * as os from 'os'
 import * as path from 'path'
 import * as xml2js from 'xml2js';
-import { TfTypes } from './types';
-import { FileNode } from './pendingchanges';
+import { PendingChange, Changeset } from '../TFS/Types';
+import { FileNode } from '../vscode/PendingChangesTreeView';
 
 export class Utilities {
     static removeLeadingSlash(uri: vscode.Uri) {
@@ -60,8 +60,8 @@ export class Utilities {
           return undefined;
       }
 
-      static async tfsStatusXmlToTypedArray(xml: string): Promise<TfTypes.PendingChange[]> {
-        const pendingChanges: TfTypes.PendingChange[] = [];
+      static async tfsStatusXmlToTypedArray(xml: string): Promise<PendingChange[]> {
+        const pendingChanges: PendingChange[] = [];
         const parsedObject = await Utilities.xmlToObject(xml);
         if (!parsedObject || !parsedObject.Status || !parsedObject.Status.PendingSet || !parsedObject.Status.PendingSet.PendingChanges || !parsedObject.Status.PendingSet.PendingChanges.PendingChange) {
             return pendingChanges; 
@@ -76,21 +76,21 @@ export class Utilities {
         return pendingChanges;
     }
 
-    static async parseTfHistoryOutput(tfOutput: string): Promise<TfTypes.Changeset[]> {
+    static async parseTfHistoryOutput(tfOutput: string): Promise<Changeset[]> {
         const changesetPattern = /^Changeset:\s+(\d+)/;
         const userPattern = /^User:\s+(.+)/;
         const datePattern = /^Date:\s+(.+)/;
         const commentPattern = /^Comment:\s*(.+)/;
         const itemPattern = /^  edit\s+\$(.+)/;
     
-        let changesets: TfTypes.Changeset[] = [];
-        let currentChangeset: Partial<TfTypes.Changeset> = {};
+        let changesets: Changeset[] = [];
+        let currentChangeset: Partial<Changeset> = {};
         let lines = tfOutput.split('\n');
     
         for (let line of lines) {
             if (changesetPattern.test(line)) {
                 if (currentChangeset.changesetId) {
-                    changesets.push(currentChangeset as TfTypes.Changeset);
+                    changesets.push(currentChangeset as Changeset);
                     currentChangeset = {};
                 }
                 let match = line.match(changesetPattern);
@@ -112,11 +112,9 @@ export class Utilities {
         }
     
         if (currentChangeset.changesetId) {
-            changesets.push(currentChangeset as TfTypes.Changeset);
+            changesets.push(currentChangeset as Changeset);
         }
     
         return changesets;
     }
-
-    
 }

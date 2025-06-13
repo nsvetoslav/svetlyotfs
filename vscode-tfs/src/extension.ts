@@ -1,13 +1,13 @@
 import * as vscode from "vscode";
 import path from "path";
-import { VscodeActionHandlerFunctions } from "./handlers";
-import { PendingChangesSCM } from "./pendingchanges";
-import { WorkspacesStatusBarItem } from "./workspaces";
-import { TfTypes } from "./types";
-import { Utilities } from "./utils";
-import { FileHistorySCM } from "./fileHistorySCM";
-import { Settings } from "./settings";
-import { PendingChangesViewDecorationProvider } from "./viewDecoration";
+import { ActionHandlers } from "./vscode/ActionHandlers";
+import { WorkspacesStatusBarItem } from "./vscode/WorkspaceStatusBarItem";
+import { FileHistoryTreeView } from "./vscode/FileHistoryTreeView";
+import { Changeset } from "./TFS/Types";
+import { PendingChangesTreeView } from "./vscode/PendingChangesTreeView";
+import { PendingChangesViewDecoration } from "./vscode/PendingChangesViewDecoration";
+import { Settings } from "./common/Settings";
+import { Utilities } from "./common/Utilities";
 
 let treeview: any;
 
@@ -21,72 +21,72 @@ export function activate(context: vscode.ExtensionContext): void {
 function registerProviders(context: vscode.ExtensionContext) {
   Settings.getInstance().setContext(context);
  
-  context.subscriptions.push(new PendingChangesViewDecorationProvider());
+  context.subscriptions.push(new PendingChangesViewDecoration());
   context.subscriptions.push(vscode.window.createTreeView("pendingChanges", {
-    treeDataProvider: PendingChangesSCM.getInstance(),
+    treeDataProvider: PendingChangesTreeView.getInstance(),
     canSelectMany: true,
   }));
 
   context.subscriptions.push( treeview = vscode.window.createTreeView("currentFileHistory", {
-    treeDataProvider: FileHistorySCM.getInstance(),
+    treeDataProvider: FileHistoryTreeView.getInstance(),
     canSelectMany: true,
   }));
   
-  PendingChangesSCM.getInstance().refresh();
+  PendingChangesTreeView.getInstance().refresh();
 }
 
 function registerHandlers(context: vscode.ExtensionContext){
   // Save document
   context.subscriptions.push(vscode.workspace.onWillSaveTextDocument( async (event) => {
-    return await VscodeActionHandlerFunctions.onSaveDocument(event.document.uri)
+    return await ActionHandlers.onSaveDocument(event.document.uri)
   }));
 
   context.subscriptions.push(vscode.workspace.onDidSaveTextDocument(async () => {
-    return await PendingChangesSCM.getInstance().refresh();
+    return await PendingChangesTreeView.getInstance().refresh();
   }))
 
   // Rename files
   context.subscriptions.push(vscode.workspace.onDidRenameFiles(async (event) => {
-    await VscodeActionHandlerFunctions.renameFiles(event.files);
-    return await PendingChangesSCM.getInstance().refresh();
+    await ActionHandlers.renameFiles(event.files);
+    return await PendingChangesTreeView.getInstance().refresh();
   }));
 
   // Delete files
   context.subscriptions.push(vscode.workspace.onWillDeleteFiles(async (event) => { 
-    return await event.waitUntil(VscodeActionHandlerFunctions.deleteFiles(event.files));
+    return await event.waitUntil(ActionHandlers.deleteFiles(event.files));
   }));
 
   context.subscriptions.push(vscode.workspace.onDidDeleteFiles(async () => {
-    return await PendingChangesSCM.getInstance().refresh();
+    return await PendingChangesTreeView.getInstance().refresh();
   }));
 
   // Create files
   context.subscriptions.push(vscode.workspace.onDidCreateFiles(async (event) => {
-    await VscodeActionHandlerFunctions.createFiles(event.files);
-    return await PendingChangesSCM.getInstance().refresh();
+    await ActionHandlers.createFiles(event.files);
+    return await PendingChangesTreeView.getInstance().refresh();
   }));
 
   // Commands registration
   context.subscriptions.push(vscode.commands.registerCommand("pendingChanges.undo", async (uri: any) => {
-    await VscodeActionHandlerFunctions.undo(uri);
-    return await PendingChangesSCM.getInstance().refresh();
+    await ActionHandlers.undo(uri);
+    return await PendingChangesTreeView.getInstance().refresh();
   }));
 
   context.subscriptions.push(vscode.commands.registerCommand('fileHistory.comapreWithAnother', async () =>{
-    let changesets: TfTypes.Changeset[] = [];
+    let changesets: Changeset[] = [];
 
     treeview.selection.forEach((item: { data: any; }) => {
       const queryObject = JSON.parse((item as any).resourceUri.query as any)
       console.log(queryObject);
 
-      changesets.push(queryObject as TfTypes.Changeset);
+      changesets.push(queryObject as Changeset);
     });
 
     if(changesets.length != 2 || changesets === undefined) {
       return;
     }
 
-    await VscodeActionHandlerFunctions.compareFilesFromHistory(vscode.Uri.parse(changesets[0].items[0]),
+    await ActionHandlers.compareFilesFromHistory(vscode.Uri.parse(changesets[0].items[0]),
       changesets[0].changesetId.toString(),
       changesets[0].user as string,
       changesets[1].changesetId.toString(),
@@ -108,12 +108,12 @@ function registerHandlers(context: vscode.ExtensionContext){
       return;
     }
 
-    const fileHistory = await VscodeActionHandlerFunctions.onOpenDocument(event.document.uri);
-    FileHistorySCM.getInstance().refresh(fileHistory as any);
+    const fileHistory = await ActionHandlers.onOpenDocument(event.document.uri);
+    FileHistoryTreeView.getInstance().refresh(fileHistory as any);
   }))
   
   vscode.commands.registerCommand("pendingChanges.compareFiles", async (uri: any) => {
-    return await VscodeActionHandlerFunctions.compareFileWithLatest(uri)
+    return await ActionHandlers.compareFileWithLatest(uri)
   });
 }
 

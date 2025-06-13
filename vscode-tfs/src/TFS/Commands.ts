@@ -1,12 +1,11 @@
 import * as vscode from "vscode"
 import * as path from 'path'
 import * as fs from 'fs'
-import { FileNode } from "./pendingchanges";
-import { Settings } from "./settings";
-import { tf } from "./tfExe";
-import { TfTypes } from "./types";
-import { Utilities } from "./utils";
-
+import { tf } from "./Spawn";
+import { WorkspaceInfo } from "./Types";
+import { FileNode } from "../vscode/PendingChangesTreeView";
+import { Settings } from "../common/Settings";
+import { Utilities } from "../common/Utilities";
 
 enum TeamServerCommands {
     Add = "add",
@@ -35,16 +34,16 @@ enum TeamServerCommandLineArgs {
     Version = "/version:C"
 }
 
-export class TeamServer {
-    private static instance: TeamServer;
+export class TFSCommandExecutor {
+    private static instance: TFSCommandExecutor;
     private constructor() { }
 
-    public static getInstance(): TeamServer {
-        if (!TeamServer.instance) {
-            TeamServer.instance = new TeamServer();
+    public static getInstance(): TFSCommandExecutor {
+        if (!TFSCommandExecutor.instance) {
+            TFSCommandExecutor.instance = new TFSCommandExecutor();
         }
 
-        return TeamServer.instance;
+        return TFSCommandExecutor.instance;
     }
 
     private getActiveWorkspace () : string | undefined {
@@ -200,7 +199,7 @@ export class TeamServer {
         try {
             task = await tf([TeamServerCommands.Workspaces])
             const splittedConnectionsOutput = task.split('\n');
-            const workspaceInfo: TfTypes.WorkspaceInfo = {
+            const workspaceInfo: WorkspaceInfo = {
                 collection: '',
                 workspaces: []
               };

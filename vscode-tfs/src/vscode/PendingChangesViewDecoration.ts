@@ -1,17 +1,16 @@
 import * as vscode from 'vscode';
-import { PendingChangesSCM } from './pendingchanges';
-import { TfStatuses } from './statuses';
-import { TfTypes } from './types';
+import { PendingChangesTreeView } from './PendingChangesTreeView';
+import { PendingChange, TfStatus } from '../TFS/Types';
 
-export class PendingChangesViewDecorationProvider implements vscode.FileDecorationProvider {
+export class PendingChangesViewDecoration implements vscode.FileDecorationProvider {
 	private _disposables: vscode.Disposable[] = [];
   constructor() {
 		this._disposables.push(vscode.window.registerFileDecorationProvider(this));
 	} 
   
-fromFileChangeNodeUri(uri: vscode.Uri): TfTypes.PendingChange | undefined {
+fromFileChangeNodeUri(uri: vscode.Uri): PendingChange | undefined {
 	try {
-		return uri.query ? JSON.parse(uri.query) as TfTypes.PendingChange : undefined;
+		return uri.query ? JSON.parse(uri.query) as PendingChange : undefined;
 	} catch (e) { }
 
   
@@ -24,12 +23,12 @@ fromFileChangeNodeUri(uri: vscode.Uri): TfTypes.PendingChange | undefined {
 		_token: vscode.CancellationToken,
 	): vscode.ProviderResult<vscode.FileDecoration> {
     
-    const fileNode = PendingChangesSCM.getInstance().getFileNode(uri);
-    const folderNode = PendingChangesSCM.getInstance().getFolderNode(uri);
+    const fileNode = PendingChangesTreeView.getInstance().getFileNode(uri);
+    const folderNode = PendingChangesTreeView.getInstance().getFolderNode(uri);
     let pendingChange = this.fromFileChangeNodeUri(uri);
 
     if(pendingChange) {
-        pendingChange = pendingChange as TfTypes.PendingChange;
+        pendingChange = pendingChange as PendingChange;
         return {
           propagate: false,
           color: this.color(pendingChange.chg),
@@ -54,25 +53,25 @@ fromFileChangeNodeUri(uri: vscode.Uri): TfTypes.PendingChange | undefined {
     return undefined;
 	}
 
-  color(status: TfStatuses.TfStatus): vscode.ThemeColor {
+  color(status: TfStatus): vscode.ThemeColor {
 		let color: string = this.remoteReposColors(status);
 		return new vscode.ThemeColor(color);
 	}
 
   // Тази функция я описвам просто с ":D"
-  remoteReposColors(status: TfStatuses.TfStatus): string  {
+  remoteReposColors(status: TfStatus): string  {
 		switch (status) {
-      case TfStatuses.TfStatus.AddEncoding:
+      case TfStatus.AddEncoding:
 				return 'gitDecoration.addedResourceForeground';
-      case TfStatuses.TfStatus.AddEditEncoding:
+      case TfStatus.AddEditEncoding:
 				return 'gitDecoration.addedResourceForeground';
-			case TfStatuses.TfStatus.Edit:
+			case TfStatus.Edit:
 				return 'gitDecoration.modifiedResourceForeground';
-			case TfStatuses.TfStatus.Add:
+			case TfStatus.Add:
 				return 'gitDecoration.addedResourceForeground';
-			case TfStatuses.TfStatus.Delete:
+			case TfStatus.Delete:
 				return 'gitDecoration.deletedResourceForeground';
-			case TfStatuses.TfStatus.Rename:
+			case TfStatus.Rename:
 				return 'gitDecoration.renamedResourceForeground';
       default:
         return '';

@@ -8,20 +8,20 @@ export class BlameDecorationsProvider {
 
     private constructor() {
         this.decorationType = vscode.window.createTextEditorDecorationType({
-        before: {
-            color: new vscode.ThemeColor('editorLineNumber.foreground'),
-            fontStyle: 'italic',
-            margin: '0 10px 0 0'
-        },
-        rangeBehavior: vscode.DecorationRangeBehavior.OpenOpen
+            before: {
+                color: new vscode.ThemeColor('editorLineNumber.foreground'),
+                fontStyle: 'italic',
+                margin: '0 10px 0 0'
+            },
+            rangeBehavior: vscode.DecorationRangeBehavior.OpenOpen
         });
 
         this.paddingDecorationType = vscode.window.createTextEditorDecorationType({
-        before: {
-            // just reserves space; no text
-            margin: '0 10px 0 0'
-        },
-        rangeBehavior: vscode.DecorationRangeBehavior.OpenOpen
+            before: {
+                // just reserves space; no text
+                margin: '0 10px 0 0'
+            },
+            rangeBehavior: vscode.DecorationRangeBehavior.OpenOpen
         });
     }
 
@@ -33,121 +33,121 @@ export class BlameDecorationsProvider {
         return BlameDecorationsProvider.instance;
     }
 
-   public showBlameInformation(editor: vscode.TextEditor, blameResult: BlameResult) {
-    if (!blameResult?.blameInfo) return;
+    public showBlameInformation(editor: vscode.TextEditor, blameResult: BlameResult) {
+        if (!blameResult?.blameInfo) return;
 
-    const blocks = this.groupBlameInfoIntoBlocks(blameResult.blameInfo);
+        const blocks = this.groupBlameInfoIntoBlocks(blameResult.blameInfo);
 
-    // Compute max width in characters
-    const maxWidth = this.calculateMaxBlameWidth(blocks);
-    const reservedWidth = `${maxWidth + 2}ch`; // +2 for gap
+        // Compute max width in characters
+        const maxWidth = this.calculateMaxBlameWidth(blocks);
+        const reservedWidth = `${maxWidth + 2}ch`; // +2 for gap
 
-    // Collect lines that have blame decorations
-    const linesWithBlame = new Set<number>();
-    for (const block of blocks) {
-      const firstLine = block.startLine - 1;
-      if (firstLine >= 0) {
-        linesWithBlame.add(firstLine);
-      }
-    }
-
-    // 1) Spacer only on lines WITHOUT blame decorations
-    const paddingDecos: vscode.DecorationOptions[] = [];
-    for (let i = 0; i < editor.document.lineCount; i++) {
-      // Skip lines that have blame decorations
-      if (linesWithBlame.has(i)) {
-        continue;
-      }
-      
-      const range = new vscode.Range(i, 0, i, 0);
-      paddingDecos.push({
-        range,
-        renderOptions: { before: { contentText: '', width: reservedWidth } }
-      });
-    }
-
-    // 2) Label only on the first line of each block
-    const labelDecos: vscode.DecorationOptions[] = [];
-    for (const block of blocks) {
-      const firstLine = block.startLine - 1;
-      if (firstLine < 0) continue;
-
-      const authorInitials = this.getAuthorInitials(block.author);
-      const formattedDate = this.formatDate(block.date);
-      const text = `${authorInitials} ${block.changesetId}`;
-
-      labelDecos.push({
-        range: new vscode.Range(firstLine, 0, firstLine, 0),
-        renderOptions: { before: { contentText: text, width: reservedWidth } },
-        hoverMessage: this.createHoverMessage(block)
-      });
-    }
-
-    // Apply separately so they don't clobber each other
-    editor.setDecorations(this.paddingDecorationType, paddingDecos);
-    editor.setDecorations(this.decorationType, labelDecos);
-  }
-
-  public hideBlameInformation(editor: vscode.TextEditor) {
-    editor.setDecorations(this.paddingDecorationType, []);
-    editor.setDecorations(this.decorationType, []);
-  }
-            
-            private loadingInterval: NodeJS.Timeout | undefined;
-            private spinnerFrames: string[] = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
-            private currentFrameIndex: number = 0;
-        
-            public showLoadingIndicator(editor: vscode.TextEditor) {
-                // Clear any existing loading animation
-                this.hideLoadingIndicator();
-                
-                // Create an animated loading indicator in the first line
-                const range = new vscode.Range(0, 0, 0, 0);
-                const decorations: vscode.DecorationOptions[] = [{
-                    range: range,
-                    renderOptions: {
-                        before: {
-                            contentText: this.spinnerFrames[this.currentFrameIndex],
-                            color: new vscode.ThemeColor('editorLineNumber.foreground'),
-                            fontStyle: 'italic',
-                            fontWeight: 'normal'
-                        }
-                    }
-                }];
-                
-                // Apply decorations to the editor
-                editor.setDecorations(this.paddingDecorationType, decorations);
-                
-                // Start animation
-                this.loadingInterval = setInterval(() => {
-                    this.currentFrameIndex = (this.currentFrameIndex + 1) % this.spinnerFrames.length;
-                    const decorations: vscode.DecorationOptions[] = [{
-                        range: range,
-                        renderOptions: {
-                            before: {
-                                contentText: this.spinnerFrames[this.currentFrameIndex],
-                                color: new vscode.ThemeColor('editorLineNumber.foreground'),
-                                fontStyle: 'italic',
-                                fontWeight: 'normal'
-                            }
-                        }
-                    }];
-                    editor.setDecorations(this.paddingDecorationType, decorations);
-                }, 100);
+        // Collect lines that have blame decorations
+        const linesWithBlame = new Set<number>();
+        for (const block of blocks) {
+            const firstLine = block.startLine - 1;
+            if (firstLine >= 0) {
+                linesWithBlame.add(firstLine);
             }
-        
-            public hideLoadingIndicator() {
-                if (this.loadingInterval) {
-                    clearInterval(this.loadingInterval);
-                    this.loadingInterval = undefined;
-                    this.currentFrameIndex = 0;
+        }
+
+        // 1) Spacer only on lines WITHOUT blame decorations
+        const paddingDecos: vscode.DecorationOptions[] = [];
+        for (let i = 0; i < editor.document.lineCount; i++) {
+            // Skip lines that have blame decorations
+            if (linesWithBlame.has(i)) {
+                continue;
+            }
+
+            const range = new vscode.Range(i, 0, i, 0);
+            paddingDecos.push({
+                range,
+                renderOptions: { before: { contentText: '', width: reservedWidth } }
+            });
+        }
+
+        // 2) Label only on the first line of each block
+        const labelDecos: vscode.DecorationOptions[] = [];
+        for (const block of blocks) {
+            const firstLine = block.startLine - 1;
+            if (firstLine < 0) continue;
+
+            const authorInitials = this.getAuthorInitials(block.author);
+            const formattedDate = this.formatDate(block.date);
+            const text = `${authorInitials} ${block.changesetId}`;
+
+            labelDecos.push({
+                range: new vscode.Range(firstLine, 0, firstLine, 0),
+                renderOptions: { before: { contentText: text, width: reservedWidth } },
+                hoverMessage: this.createHoverMessage(block)
+            });
+        }
+
+        // Apply separately so they don't clobber each other
+        editor.setDecorations(this.paddingDecorationType, paddingDecos);
+        editor.setDecorations(this.decorationType, labelDecos);
+    }
+
+    public hideBlameInformation(editor: vscode.TextEditor) {
+        editor.setDecorations(this.paddingDecorationType, []);
+        editor.setDecorations(this.decorationType, []);
+    }
+
+    private loadingInterval: NodeJS.Timeout | undefined;
+    private spinnerFrames: string[] = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+    private currentFrameIndex: number = 0;
+
+    public showLoadingIndicator(editor: vscode.TextEditor) {
+        // Clear any existing loading animation
+        this.hideLoadingIndicator();
+
+        // Create an animated loading indicator in the first line
+        const range = new vscode.Range(0, 0, 0, 0);
+        const decorations: vscode.DecorationOptions[] = [{
+            range: range,
+            renderOptions: {
+                before: {
+                    contentText: this.spinnerFrames[this.currentFrameIndex],
+                    color: new vscode.ThemeColor('editorLineNumber.foreground'),
+                    fontStyle: 'italic',
+                    fontWeight: 'normal'
                 }
             }
+        }];
+
+        // Apply decorations to the editor
+        editor.setDecorations(this.paddingDecorationType, decorations);
+
+        // Start animation
+        this.loadingInterval = setInterval(() => {
+            this.currentFrameIndex = (this.currentFrameIndex + 1) % this.spinnerFrames.length;
+            const decorations: vscode.DecorationOptions[] = [{
+                range: range,
+                renderOptions: {
+                    before: {
+                        contentText: this.spinnerFrames[this.currentFrameIndex],
+                        color: new vscode.ThemeColor('editorLineNumber.foreground'),
+                        fontStyle: 'italic',
+                        fontWeight: 'normal'
+                    }
+                }
+            }];
+            editor.setDecorations(this.paddingDecorationType, decorations);
+        }, 100);
+    }
+
+    public hideLoadingIndicator() {
+        if (this.loadingInterval) {
+            clearInterval(this.loadingInterval);
+            this.loadingInterval = undefined;
+            this.currentFrameIndex = 0;
+        }
+    }
     private groupBlameInfoIntoBlocks(blameInfo: BlameInfo[]): any[] {
         if (blameInfo.length === 0) {
             return [];
         }
-        
+
         const blocks = [];
         let currentBlock = {
             startLine: blameInfo[0].lineNumber,
@@ -156,18 +156,22 @@ export class BlameDecorationsProvider {
             changesetId: blameInfo[0].changesetId,
             date: blameInfo[0].date
         };
-        
+
+
         for (let i = 1; i < blameInfo.length; i++) {
             const info = blameInfo[i];
-            
+
             // Check if this line continues the current block
-            if (info.author === currentBlock.author && 
-                info.changesetId === currentBlock.changesetId && 
+            if (info.author === currentBlock.author &&
+                info.changesetId === currentBlock.changesetId &&
                 info.date === currentBlock.date &&
                 info.lineNumber === currentBlock.endLine + 1) {
                 // Extend the current block
                 currentBlock.endLine = info.lineNumber;
             } else {
+                if (currentBlock.endLine < info.lineNumber)
+                    currentBlock.endLine = info.lineNumber - 1;
+
                 // Finish the current block and start a new one
                 blocks.push(currentBlock);
                 currentBlock = {
@@ -179,23 +183,23 @@ export class BlameDecorationsProvider {
                 };
             }
         }
-        
+
         // Don't forget the last block
         blocks.push(currentBlock);
-        
+
         return blocks;
     }
 
     private calculateMaxBlameWidth(blocks: any[]): number {
         let maxWidth = 0;
-        
+
         for (const block of blocks) {
             const authorInitials = this.getAuthorInitials(block.author);
             const formattedDate = this.formatDate(block.date);
             const blameText = `${authorInitials} ${block.changesetId} ${formattedDate}`;
             maxWidth = Math.max(maxWidth, blameText.length);
         }
-        
+
         return maxWidth;
     }
 

@@ -142,6 +142,24 @@
                 "command": "vscode-tfs.list",
                 "title": "Team Foundation Server...",
                 "category": "TFS"
+            },
+            {
+                "command": "vscode-tfs.testAnnotate",
+                "title": "Test Annotate Command",
+                "detail": "Test the annotate command output parsing.",
+                "category": "TFS"
+            },
+            {
+                "command": "vscode-tfs.testBlameIntegration",
+                "title": "Test Blame Integration",
+                "detail": "Test the blame feature integration.",
+                "category": "TFS"
+            },
+            {
+                "command": "vscode-tfs.showBlame",
+                "title": "TFS: Annotate",
+                "detail": "TFS: Annotate",
+                "category": "TFS"
             }
         ],
         "menus": {
@@ -182,6 +200,13 @@
                 {
                     "command": "vscode-tfs.list"
                 }
+            ],
+            "editor/context": [
+                {
+                    "command": "vscode-tfs.showBlame",
+                    "when": "editorTextFocus",
+                    "group": "navigation"
+                }
             ]
         },
         "configuration": {
@@ -195,6 +220,20 @@
                 "tfs.promptToCheckOut": {
                     "type": "boolean",
                     "description": "True -> Checkout prompt in Team Foundation Server \n False -> Automatically check out files."
+                },
+                "tfs.tfptLocation": {
+                    "type": "string",
+                    "description": "Path to the TFS Power Tools command line client (tfpt.exe)."
+                },
+                "tfs.blame.enabled": {
+                    "type": "boolean",
+                    "description": "Enable/disable blame feature.",
+                    "default": true
+                },
+                "tfs.blame.cacheSize": {
+                    "type": "number",
+                    "description": "Maximum number of files to cache for blame information.",
+                    "default": 50
                 }
             }
         },

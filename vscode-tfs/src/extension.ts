@@ -6,8 +6,12 @@ import { FileHistoryTreeView } from "./vscode/FileHistoryTreeView";
 import { Changeset } from "./TFS/Types";
 import { PendingChangesTreeView } from "./vscode/PendingChangesTreeView";
 import { PendingChangesViewDecoration } from "./vscode/PendingChangesViewDecoration";
+import { BlameManager } from "./TFS/BlameManager";
+import { BlameDecorationsProvider } from "./vscode/BlameDecorationsProvider";
 import { Settings } from "./common/Settings";
 import { Utilities } from "./common/Utilities";
+import { testAnnotateCommand } from "./test/annotateTest";
+import { runBlameIntegrationTest } from "./test/blameIntegrationTest";
 
 let treeview: any;
 
@@ -115,6 +119,58 @@ function registerHandlers(context: vscode.ExtensionContext){
   vscode.commands.registerCommand("pendingChanges.compareFiles", async (uri: any) => {
     return await ActionHandlers.compareFileWithLatest(uri)
   });
+  
+  // Test annotate command
+  context.subscriptions.push(vscode.commands.registerCommand("vscode-tfs.testAnnotate", async () => {
+    return await testAnnotateCommand();
+  }));
+  
+  // Test blame integration
+  context.subscriptions.push(vscode.commands.registerCommand("vscode-tfs.testBlameIntegration", async () => {
+    return await runBlameIntegrationTest();
+  }));
+  
+  // Show blame information for a file
+  context.subscriptions.push(vscode.commands.registerCommand("vscode-tfs.showBlame", async () => {
+    // Get the active text editor's document
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+      vscode.window.showErrorMessage("No active editor to show blame information for.");
+      return;
+    }
+    
+    const resource = editor.document.uri;
+    const decorationsProvider = BlameDecorationsProvider.getInstance();
+    
+    // Show loading indicator
+    decorationsProvider.showLoadingIndicator(editor);
+    
+    // Get blame information for the file
+    try {
+      const blameManager = BlameManager.getInstance();
+      const blameResult = await blameManager.getFileBlame(resource);
+      
+      // Hide loading indicator
+      decorationsProvider.hideLoadingIndicator();
+      
+      if (blameResult) {
+        // Show the blame information as decorations
+        decorationsProvider.showBlameInformation(editor, blameResult);
+        
+        vscode.window.showInformationMessage(`Blame information displayed for ${resource.fsPath}`);
+      } else {
+        vscode.window.showErrorMessage(`Could not get blame information for ${resource.fsPath}`);
+      }
+    } catch (error: any) {
+      // Hide loading indicator in case of error
+      decorationsProvider.hideLoadingIndicator();
+      vscode.window.showErrorMessage(`Error getting blame information: ${error.message}`);
+      console.error("Error getting blame information:", error);
+    }
+  }));
+  
+  // Blame functionality - now only available via context menu
+  // Removed automatic blame loading on file open
 }
 
 function addWorkspaceStatusBarItem(context: vscode.ExtensionContext) {

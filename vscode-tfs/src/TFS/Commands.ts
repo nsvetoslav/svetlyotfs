@@ -1,8 +1,15 @@
 import * as vscode from "vscode"
 import * as path from 'path'
 import * as fs from 'fs'
+<<<<<<< HEAD
 import { tf } from "./Spawn";
 import { WorkspaceInfo } from "./Types";
+=======
+import { spawnSync } from "child_process"
+import * as iconv from 'iconv-lite';
+import { tf } from "./Spawn";
+import { WorkspaceInfo, BlameInfo, BlameResult } from "./Types";
+>>>>>>> b5f1d075e6ade18c3604ffd846e00406554efdc3
 import { FileNode } from "../vscode/PendingChangesTreeView";
 import { Settings } from "../common/Settings";
 import { Utilities } from "../common/Utilities";
@@ -38,6 +45,11 @@ export class TFSCommandExecutor {
     private static instance: TFSCommandExecutor;
     private constructor() { }
 
+<<<<<<< HEAD
+=======
+    static changesetInfo = new Map<number, {user: string, date: string}>();
+
+>>>>>>> b5f1d075e6ade18c3604ffd846e00406554efdc3
     public static getInstance(): TFSCommandExecutor {
         if (!TFSCommandExecutor.instance) {
             TFSCommandExecutor.instance = new TFSCommandExecutor();
@@ -186,7 +198,10 @@ export class TFSCommandExecutor {
                 Utilities.removeLeadingSlash(uri), 
                 TeamServerCommandLineArgs.Recursive, 
                 TeamServerCommandLineArgs.DetailedFormat]);
+<<<<<<< HEAD
 
+=======
+>>>>>>> b5f1d075e6ade18c3604ffd846e00406554efdc3
         } catch(error: any) {
             // No errror messages for extra functionalities ^^, if the execution doesn't succeed that means TFS is garbage.
         }
@@ -232,4 +247,193 @@ export class TFSCommandExecutor {
             return false;
         }
     }
+<<<<<<< HEAD
 }
+=======
+    
+    public async annotate(uri: vscode.Uri): Promise<BlameResult | undefined> {
+        const tfptPath: string | undefined = vscode.workspace.getConfiguration("tfs").get("tfptLocation");
+        
+        if (!tfptPath) {
+            throw new Error("tfpt.exe path is not configured");
+        }
+        
+        try {
+            // Execute tfpt annotate command
+            const args = ["annotate", Utilities.removeLeadingSlash(uri), "/noprompt"];
+            const task = spawnSync(tfptPath, args, { encoding: 'buffer' });
+            
+            if (task.stderr.toString().length > 0) {
+                throw new Error(task.stderr.toString());
+            }
+            
+            const outputString = iconv.decode(task.stdout, 'win1251');
+            
+            // Parse the annotate output to get changeset IDs
+            const blameResult = this.parseAnnotateOutput(uri.fsPath, outputString);
+            
+            // Get user information for each changeset
+            const changesetIds = [...new Set(blameResult.blameInfo.map(info => info.changesetId))];
+            await this.getChangesetUsers(changesetIds, uri);
+            
+            // Update blame info with actual user names and dates
+            for (const blameInfo of blameResult.blameInfo) {
+                if (TFSCommandExecutor.changesetInfo.has(blameInfo.changesetId)) {
+                    const info = TFSCommandExecutor.changesetInfo.get(blameInfo.changesetId);
+                    if (info) {
+                        blameInfo.author = info.user || blameInfo.author;
+                        if (info.date) {
+                            blameInfo.date = info.date;
+                        }
+                    }
+                }
+            }
+            
+            return blameResult;
+        } catch (err: any) {
+            throw new Error(err.stderr ? err.stderr : err.message);
+        }
+    }
+    
+    private async getChangesetUsers(changesetIds: number[], fileUri: vscode.Uri){
+        
+        // For each changeset ID, get the user information using tf history
+        for (const changesetId of changesetIds) {
+            try {
+                if(TFSCommandExecutor.changesetInfo.has(changesetId))
+                    continue;
+
+                // Get changeset details
+                const historyOutput = await tf([TeamServerCommands.History,
+                    Utilities.removeLeadingSlash(fileUri),
+                    `/version:C${changesetId}`,
+                    TeamServerCommandLineArgs.DetailedFormat]);
+                
+                // Parse the history output to extract user and date information
+                const lines = historyOutput.split('\n');
+                let user = '';
+                let date = '';
+                
+                for (const line of lines) {
+                    if (line.startsWith('User:')) {
+                        user = line.substring(5).trim();
+                    } else if (line.startsWith('Date:')) {
+                        date = line.substring(5).trim();
+                    }
+
+                    if(user != '' && date != '')
+                        break;
+                }
+                
+                if (user && date) {
+                    TFSCommandExecutor.changesetInfo.set(changesetId, {user, date});
+                } else if (user) {
+                    // If we only have user info, use an empty string for date
+                    TFSCommandExecutor.changesetInfo.set(changesetId, {user, date: ''});
+                }
+            } catch (error) {
+                // If we can't get user information for a changeset, we'll keep the original author info
+                console.warn(`Could not get user information for changeset ${changesetId}:`, error);
+            }
+        }
+    }
+    
+    private parseAnnotateOutput(filePath: string, output: string): BlameResult {
+        const lines = output.split('\n');
+        const blameInfo: BlameInfo[] = [];
+        
+        // Parse the annotate output
+        // The tfpt annotate format is typically:
+        // changesetId author date-time content
+        // But we need to handle different formats that might be encountered
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            if (line.trim()) {
+                // Try to parse the line with a more flexible approach
+                // The format can vary, but typically starts with changeset info
+                const trimmedLine = line.trim();
+                
+                // Common formats:
+                // 1. "changesetId author date content"
+                // 2. "changesetId author date-time content"
+                // 3. "changesetId:author date content"
+                
+                // Try format 1: "changesetId author date content"
+                let match = trimmedLine.match(/^(\d+)\s+([^\s]+)\s+(\d{4}-\d{2}-\d{2})\s+(.*)$/);
+                if (match) {
+                    const [, changesetIdStr, author, date, content] = match;
+                    const changesetId = parseInt(changesetIdStr, 10);
+                    
+                    blameInfo.push({
+                        lineNumber: i + 1,
+                        changesetId: changesetId,
+                        author: author,
+                        date: date,
+                        content: content
+                    });
+                    continue;
+                }
+                
+                // Try format 2: "changesetId author date-time content"
+                match = trimmedLine.match(/^(\d+)\s+([^\s]+)\s+(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[\+\-]?\d*:?\d*)\s+(.*)$/);
+                if (match) {
+                    const [, changesetIdStr, author, date, content] = match;
+                    const changesetId = parseInt(changesetIdStr, 10);
+                    
+                    blameInfo.push({
+                        lineNumber: i + 1,
+                        changesetId: changesetId,
+                        author: author,
+                        date: date,
+                        content: content
+                    });
+                    continue;
+                }
+                
+                // Try format 3: "changesetId:author date content"
+                match = trimmedLine.match(/^(\d+):([^\s]+)\s+(\d{4}-\d{2}-\d{2})\s+(.*)$/);
+                if (match) {
+                    const [, changesetIdStr, author, date, content] = match;
+                    const changesetId = parseInt(changesetIdStr, 10);
+                    
+                    blameInfo.push({
+                        lineNumber: i + 1,
+                        changesetId: changesetId,
+                        author: author,
+                        date: date,
+                        content: content
+                    });
+                    continue;
+                }
+                
+                // Fallback for any other format - try to extract at least changesetId and author
+                const parts = trimmedLine.split(/\s+/);
+                if (parts.length >= 2) {
+                    // Try to find a changeset ID (number) in the first part
+                    const changesetMatch = parts[0].match(/^(\d+)/);
+                    if (changesetMatch) {
+                        const changesetId = parseInt(changesetMatch[1], 10);
+                        const author = parts.length > 1 ? parts[1].split(':')[0] : 'Unknown';
+                        const date = parts.length > 2 ? parts[2] : '';
+                        const content = parts.length > 3 ? parts.slice(3).join(' ') : '';
+                        
+                        blameInfo.push({
+                            lineNumber: i + 1,
+                            changesetId: changesetId,
+                            author: author,
+                            date: date,
+                            content: content
+                        });
+                    }
+                }
+            }
+        }
+        
+        return {
+            filePath: filePath,
+            blameInfo: blameInfo,
+            timestamp: new Date()
+        };
+    }
+}
+>>>>>>> b5f1d075e6ade18c3604ffd846e00406554efdc3

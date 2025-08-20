@@ -1,7 +1,7 @@
 import * as vscode from "vscode"
-import { LocalCache } from "./LocalCache";
 import { TFSCommandExecutor } from "../TFS/Commands";
 import { WorkspaceInfo } from "../TFS/Types";
+import { LocalCache } from "./LocalCache";
 
 enum SettingNames
 {

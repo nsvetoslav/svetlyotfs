@@ -53,6 +53,22 @@ export interface Changeset {
     items: string[];
 }
 
+// Blame information for a single line
+export interface BlameInfo {
+    lineNumber: number;
+    changesetId: number;
+    author: string;
+    date: string;
+    content: string;
+}
+
+// Complete blame information for a file
+export interface BlameResult {
+    filePath: string;
+    blameInfo: BlameInfo[];
+    timestamp: Date;
+}
+
 export function getDescriptionText(state: TfStatus){
 switch(state){
     case TfStatus.AddEncoding:

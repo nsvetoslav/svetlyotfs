@@ -32,6 +32,18 @@ After clicking the "Workspaces" button located on the left side of the status ba
  
 ![App Screenshot](https://i.postimg.cc/43cGss35/image.png)
  
+- **Context Menu**:
+ Right-click in the editor for any file and select "Show Blame Information" to display blame information for that file.
+- **Testing**:  
+  The extension includes test commands to help verify the blame feature is working correctly. See [BLAME.md](BLAME.md) for detailed documentation.
+- **Configure tfpt.exe Path (for Blame Feature)**  
+  Set the `tfpt.exe` path in **File** → **Preferences** → **Settings**.  
+  To find the path, open the Visual Studio Developer Command Prompt and run the command:  
+  ```bash
+  where tfpt.exe
+  ```
+  
+  The blame feature is enabled by default. You can disable it or adjust the cache size through the settings.
 ![App Screenshot](https://i.postimg.cc/wM2HZ2BY/image.png)
 ## 🚀 Features
  
@@ -40,6 +52,10 @@ After clicking the "Workspaces" button located on the left side of the status ba
 - **Delete** *file* applies directly in source control.
 - **Move** *file* to another directory applies directly in source control.
 - **Move** *directory* applies directly in source control.
+- **Blame Feature**:  
+  View author information for each line of code directly in the editor gutter.
+- **Blame Feature**:  
+  View author information for each line of code directly in the editor gutter. See [BLAME.md](BLAME.md) for detailed documentation.
 - **Pending Changes View**:  
   Track and manage all pending changes in your workspace.
 - **Quick File Actions**:  
@@ -48,6 +64,22 @@ After clicking the "Workspaces" button located on the left side of the status ba
   - Compare files with the latest TFS version.
 - **Status Bar Integration**:  
   Quickly set or switch the active workspace directly from the status bar.
+---
+  
+## 🔍 Blame Feature
+  
+- **Line-by-Line Author Information**:  
+  View author information for each line of code directly in the editor gutter.
+- **Background Processing**:  
+  Blame information is automatically retrieved when a file is opened.
+- **TFS Power Tools Integration**:  
+  Uses `tfpt annotate` command to retrieve blame information from TFS.
+- **Caching for Performance**:  
+  Blame information is cached to improve performance when switching between files.
+- **Configurable Display**:  
+  Enable/disable the blame feature and configure cache size through settings.
+  
+---
 ---
  
 ## 🛠️ Getting Started
